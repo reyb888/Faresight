@@ -23,7 +23,7 @@ from api.models import (
     RouteSeriesPoint,
 )
 
-router = APIRouter(prefix="/v1", tags=["index"], dependencies=[Depends(require_api_key)])
+router = APIRouter(prefix="/v1", tags=["index"])
 
 
 @router.get("/index", response_model=list[IndexPoint])
