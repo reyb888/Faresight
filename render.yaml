@@ -1,17 +1,13 @@
-# Render Blueprint — deploys the API and the scraper as separate services.
+# Render Blueprint — API Web Service only.
+# Cron scraping is handled by GitHub Actions (free tier).
 # Docs: https://render.com/docs/blueprint-spec
-#
-# Push this file to the repo root and connect the repo in the Render
-# dashboard ("New +" -> "Blueprint") to provision everything at once.
-# Secrets (DATABASE_URL, API_KEYS, etc.) are set as env vars in the
-# dashboard per service, NOT committed here.
 
 services:
-  # --- Backend API ---
+  # --- Backend API (Free Web Service) ---
   - type: web
     name: apix-api
     runtime: python
-    plan: starter
+    plan: free
     buildCommand: "pip install -r requirements.txt"
     startCommand: "uvicorn api.main:app --host 0.0.0.0 --port $PORT"
     envVars:
@@ -20,29 +16,4 @@ services:
       - key: API_KEYS
         sync: false
       - key: CORS_ALLOWED_ORIGINS
-        sync: false
-      - key: REDIS_URL
-        sync: false
-
-  # --- Daily scrape + clean + index run ---
-  - type: cron
-    name: apix-daily-scrape
-    runtime: python
-    plan: starter          # bump instance size if Playwright needs more RAM
-    schedule: "0 20 * * *" # 20:00 UTC ≈ 01:30 IST — off-peak, per SECURITY.md §1.2
-    buildCommand: >
-      pip install -r requirements.txt &&
-      playwright install --with-deps chromium
-    startCommand: >
-      bash scripts/run_daily_batch.sh
-    envVars:
-      - key: DATABASE_URL
-        sync: false
-      - key: DATABASE_URL_SYNC
-        sync: false
-      - key: APIX_BASE_PERIOD
-        sync: false
-      - key: SCRAPE_USER_AGENT
-        sync: false
-      - key: PROXY_URL
         sync: false
