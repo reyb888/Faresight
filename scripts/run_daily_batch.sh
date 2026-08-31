@@ -5,6 +5,7 @@
 set -euo pipefail
 
 export SCRAPY_SETTINGS_MODULE=scraper.settings
+export PYTHONPATH=.
 
 TODAY=$(date -u +%F)
 ROUTES=("DEL-BOM" "DEL-BLR" "BOM-BLR" "DEL-CCU" "BLR-HYD" "MAA-DEL")
