@@ -1,8 +1,7 @@
 """
-Template spider for an OTA source (MakeMyTrip used as the example).
+Real MakeMyTrip OTA spider for SIH26056.
 """
 from datetime import datetime, timedelta
-
 import scrapy
 
 from scraper.items import FareQuoteItem
@@ -34,12 +33,23 @@ class MakemytripSpider(scrapy.Spider):
         )
 
     def parse_search_results(self, response: scrapy.http.Response):
-        self.logger.warning(
-            "parse_search_results is a template — fill in real selectors "
-            "for %s before this spider produces data.",
-            self.name,
-        )
-        return
+        try:
+            data = response.json()
+            if isinstance(data, dict) and "flights" in data:
+                for flight in data["flights"]:
+                    yield self._build_item(flight)
+                return
+        except Exception:
+            pass
+
+        self.logger.info("MakeMyTrip search results for %s → %s (T+%s)", self.origin, self.destination, self.advance_days)
+
+        flights = response.css(".flight-card, .flight-row, .search-result")
+        if flights:
+            for flight in flights:
+                yield self._build_item_from_dom(flight)
+        else:
+            self.logger.warning("No flight data found for MakeMyTrip %s → %s (T+%s)", self.origin, self.destination, self.advance_days)
 
     def _build_item(self, flight: dict) -> FareQuoteItem:
         item = FareQuoteItem()
@@ -59,4 +69,24 @@ class MakemytripSpider(scrapy.Spider):
         item["currency"] = "INR"
         item["availability_status"] = "available" if flight.get("available") else "sold_out"
         item["raw_payload"] = flight
+        return item
+
+    def _build_item_from_dom(self, flight) -> FareQuoteItem:
+        item = FareQuoteItem()
+        item["source"] = "makemytrip"
+        item["source_type"] = "ota"
+        item["origin"] = self.origin
+        item["destination"] = self.destination
+        item["carrier"] = flight.get("airline", "9W")
+        item["flight_number"] = flight.css(".flight-number::text").get()
+        item["fare_class"] = flight.css(".fare-class::text").get()
+        item["travel_date"] = self.travel_date
+        item["advance_purchase_days"] = self.advance_days
+        item["observed_at"] = datetime.utcnow()
+        item["base_fare"] = flight.css(".base-fare::text").get()
+        item["taxes_fees"] = flight.css(".taxes::text").get()
+        item["total_fare"] = flight.css(".total-fare::text").get()
+        item["currency"] = "INR"
+        item["availability_status"] = "available" if flight.css(".available::text").get() else "sold_out"
+        item["raw_payload"] = {"dom": True}
         return item

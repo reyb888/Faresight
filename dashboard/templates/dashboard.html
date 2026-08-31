@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faresight — Airfare Price Index for India</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0d1117;
+            --secondary: #21262d;
+            --accent: #ff6b35;
+            --muted: #8b949e;
+            --card: #1e2329;
+            --border: #30363d;
+            --success: #3fb950;
+            --warning: #e8c163;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--primary);
+            color: #e6e6e6;
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            background: var(--secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .header h1 {
+            font-size: 22px;
+            font-weight: 600;
+            margin: 0;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            color: var(--muted);
+            font-size: 13px;
+            margin: 6px 0 0;
+        }
+
+        /* Sections */
+        .section {
+            background: var(--secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .section h2 {
+            font-size: 17px;
+            font-weight: 600;
+            margin: 0 0 14px;
+            color: #f0f0f0;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            margin-right: 14px;
+        }
+
+        .control-group label {
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+
+        .control-group select,
+        .control-group input {
+            width: 100%;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 6px 10px;
+            color: #e6e6e6;
+            font-size: 13px;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+        }
+
+        .control-group select:focus,
+        .control-group input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .window-tags {
+            display: flex;
+            gap: 6px;
+            margin-top: 6px;
+        }
+
+        .window-tag {
+            padding: 3px 7px;
+            background: var(--accent);
+            color: white;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .window-tag.active {
+            background: var(--warning);
+            color: var(--primary);
+        }
+
+        .tab-btn {
+            padding: 6px 10px;
+            background: transparent;
+            border: none;
+            border-radius: 5px;
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            background: var(--accent);
+            color: white;
+        }
+
+        /* Charts */
+        .chart-wrapper {
+            min-height: 350px;
+            max-height: 500px;
+        }
+
+        /* Index Card */
+        .index-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .index-value {
+            font-size: 42px;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+
+        .index-label {
+            color: var(--muted);
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        /* Data Table */
+        .data-table {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th,
+        td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+        }
+
+        th {
+            font-size: 10px;
+            text-transform: uppercase;
+            color: var(--muted);
+            font-weight: 600;
+        }
+
+        td {
+            color: #e6e6e6;
+        }
+
+        tr:hover td {
+            background: var(--card);
+        }
+
+        /* Comparison */
+        .comparison-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            margin-top: 12px;
+        }
+
+        .compare-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .compare-row:last-child {
+            border-bottom: none;
+        }
+
+        .compare-name {
+            font-weight: 500;
+        }
+
+        .compare-value {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        /* CSV Button */
+        .csv-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+
+        .csv-btn:hover {
+            background: #ee5a27;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+            }
+            .control-group {
+                margin-right: 0;
+                margin-bottom: 8px;
+            }
+            .window-tags {
+                justify-content: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>Faresight</h1>
+            <p>Airfare Price Index for India • SIH26056 • Ministry of Statistics and Programme Implementation</p>
+        </div>
+
+        <!-- Index Card -->
+        <div class="section" id="index-section">
+            <div class="index-card">
+                <div class="index-value" id="index-value">—</div>
+                <div class="index-label" id="index-label">APIx Index</div>
+                <div class="index-label" id="base-period" style="font-size:11px; margin-top:6px;">Base period: Jan 6, 2026</div>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="section">
+            <div class="controls">
+                <div class="control-group">
+                    <label>Route</label>
+                    <select id="route-select" onChange="loadRouteData()">
+                        <option value="">Select a route</option>
+                        {% for route in routes %}
+                        <option value="{{ route.id }}">{{ route.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label>Time Window</label>
+                    <div class="window-tags" id="window-tags">
+                        {% for w in windows %}
+                        <span class="window-tag" onclick="selectWindow({{ w }})">{{ 'T+' ~ {{ w }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>Frequency</label>
+                    <select id="frequency-select" onChange="loadIndexData()">
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- Route Data Section -->
+        <div class="section" id="route-section">
+            <h2>Route Fare History</h2>
+            <div class="chart-wrapper" id="route-chart"></div>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Median Fare (INR)</th>
+                        <th>Quotes</th>
+                    </tr>
+                </thead>
+                <tbody id="route-table-body">
+                </tbody>
+            </table>
+            <button class="csv-btn" onclick="exportCSV()" style="display: none;">Export CSV</button>
+        </section>
+
+        <!-- Heatmap Section -->
+        <div class="section" id="heatmap-section">
+            <h2>Heatmap: Median Fare by Advance-Purchase Window</h2>
+            <div class="chart-wrapper" id="heatmap-chart"></div>
+        </section>
+
+        <!-- Backtest Section -->
+        <div class="section" id="backtest-section">
+            <h2>APIx vs DGCA Validation</h2>
+            <div class="chart-wrapper" id="backtest-chart"></div>
+        </section>
+
+        <!-- Comparison Section -->
+        <div class="section" id="comparison-section" style="display: none;">
+            <h2>Route Comparison</h2>
+            <p>Select two routes to compare average fares for the selected time window.</p>
+            <div class="controls" id="comparison-controls">
+                <select id="compare-route1">
+                    <option value="">Select first route</option>
+                    {% for route in routes %}
+                    <option value="{{ route.id }}">{{ route.name }}</option>
+                    {% endfor %}
+                    </select>
+                <span style="margin: 0 10px; color: var(--muted);">vs</span>
+                <select id="compare-route2">
+                    <option value="">Select second route</option>
+                    {% for route in routes %}
+                    <option value="{{ route.id }}">{{ route.name }}</option>
+                    {% endfor %}
+                    </select>
+                </span>
+                <button class="csv-btn" onclick="exportComparisonCSV()" style="margin-left: 8px;">Compare</button>
+            </div>
+            <div class="chart-wrapper" id="comparison-chart"></div>
+        </section>
+
+        <!-- Footer -->
+        <div class="header" style="margin-top: 20px; padding: 10px 0; border-width: 1px 0; justify-content: center;">
+            <p style="font-size: 11px; color: var(--muted);">SIH26056 • Airfare Price Index for India • DGCA-weighted • Base-100 methodology • Advance-purchase windows: T+1, T+7, T+15, T+30, T+45</p>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            loadIndexData();
+            loadRouteData();
+            loadWindows();
+            loadRoutesSelect();
+            loadComparisonRoutes();
+        });
+
+        // Load index data
+        function loadIndexData() {
+            $.get("/api/index", {frequency: "daily"}, function(data) {
+                if (data && data.length > 0) {
+                    updateIndexValue(data[0].index_value);
+                } else {
+                    updateIndexValue("—");
+                }
+            });
+        }
+
+        function updateIndexValue(value) {
+            $("#index-value").text(value);
+        }
+
+        // Load route data
+        function loadRouteData() {
+            var routeId = $("#route-select").val();
+            var activeWindow = $(".window-tag.active").text() || "T+7";
+            var windowNum = activeWindow.replace('T+', '') || 7;
+
+            $.get("/api/route-data", {route: routeId, window: windowNum, frequency: "daily"}, function(response) {
+                if (response && response.data) {
+                    updateRouteChart(response.data);
+                    updateRouteTable(response.data);
+                    $("#route-section").show();
+                    $("#csv-btn").show();
+                }
+            });
+
+            // Load comparison data for the selected route
+            loadComparisonData(routeId, windowNum);
+        }
+
+        function selectWindow(window) {
+            $(".window-tag").removeClass("active");
+            $(".window-tag").each(function() {
+                $(this).toggleClass("active", $(this).text() === 'T+' + window);
+            });
+            loadRouteData();
+        }
+
+        function loadWindows() {
+            var container = $("#window-tags");
+            container.empty();
+            $.each(WINDOWS, function(i, w) {
+                var tag = $('<span class="window-tag">T+' + w + '</span>');
+                tag.click(function() {
+                    $(".window-tag").removeClass("active");
+                    $(this).addClass("active");
+                    loadRouteData();
+                });
+                container.append(tag);
+            });
+            $(".window-tag:first").addClass("active");
+        }
+
+        // Load comparison routes
+        function loadComparisonRoutes() {
+            var select1 = $("#compare-route1");
+            var select2 = $("#compare-route2");
+            select1.empty();
+            select2.empty();
+            select1.append('<option value="">Select first route</option>');
+            select2.append('<option value="">Select second route</option>');
+            {% for route in routes %}
+            select1.append('<option value="{{ route.id }}">{{ route.name }}</option>');
+            select2.append('<option value="{{ route.id }}">{{ route.name }}</option>');
+            {% endfor %}
+        }
+
+        function loadComparisonData(routeId, windowNum) {
+            if (!routeId) return;
+            $.get("/api/comparison", {routes: [routeId], window: windowNum}, function(data) {
+                if (data && data.results) {
+                    updateComparisonUI(data.results);
+                }
+            });
+        }
+
+        function updateComparisonUI(results) {
+            $("#comparison-section").show();
+            var container = $("#comparison-chart");
+            container.empty();
+
+            if (!results || results.length === 0) {
+                container.html('<p style="color: var(--muted);">Select two routes to compare</p>');
+                return;
+            }
+
+            var traces = [];
+            $.each(results, function(i, r) {
+                traces.push({
+                    name: r.route,
+                    type: 'bar',
+                    y: [r.avg_fare, r.min_fare, r.max_fare],
+                    marker: {color: i === 0 ? '#ff6b35' : '#3fb950'}
+                });
+            });
+
+            var layout = {
+                title: {'text': 'Route Comparison - Average Fares', 'font': {'size': 15}},
+                xaxis: {'title': 'Metric', 'gridcolor': var(--border)},
+                yaxis: {'title': 'Fare (INR)', 'gridcolor': var(--border)},
+                paper_bgcolor: var(--primary),
+                plot_bgcolor: var(--primary),
+                font: {color: #e6e6e6},
+                margin: {l: 40, r: 40, t: 50, b: 40}
+            };
+
+            Plotly.newPlot('comparison-chart', traces, layout);
+        }
+
+        function exportCSV() {
+            if (!$("#route-table tbody tr").length) {
+                alert("No data to export");
+                return;
+            }
+            // In a real app, this would trigger a CSV download
+            alert("CSV export - data would be downloaded");
+        }
+
+        function exportComparisonCSV() {
+            alert("Comparison CSV export");
+        }
+    </script>
+</body>
+</html>
