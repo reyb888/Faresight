@@ -1,0 +1,27 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/main.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/v1/(.*)",
+      "dest": "api/main.py"
+    },
+    {
+      "src": "/healthz",
+      "dest": "api/main.py"
+    },
+    {
+      "src": "/docs",
+      "dest": "api/main.py"
+    },
+    {
+      "src": "/openapi.json",
+      "dest": "api/main.py"
+    }
+  ]
+}
