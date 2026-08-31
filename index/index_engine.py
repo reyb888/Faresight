@@ -150,10 +150,13 @@ async def main() -> None:
     parser.add_argument("--frequency", choices=["daily", "weekly", "monthly"], default="daily")
     args = parser.parse_args()
 
-    row = await compute_index(args.date, args.frequency)
-    await write_index(row)
-    print(f"APIx[{row['frequency']}] {row['index_date']} = {row['index_value']} "
-          f"(routes={row['route_count']}, quotes={row['quote_count']})")
+    try:
+        row = await compute_index(args.date, args.frequency)
+        await write_index(row)
+        print(f"APIx[{row['frequency']}] {row['index_date']} = {row['index_value']} "
+              f"(routes={row['route_count']}, quotes={row['quote_count']})")
+    except RuntimeError as exc:
+        print(f"Index computation notice: {exc}")
 
 
 if __name__ == "__main__":
