@@ -410,15 +410,41 @@ APIx(t) = ∑ [ w_r × ( P_r(t) / P_r(0) ) ] × 100
     </footer>
 
     <script>
+        let indexChart;
+        
+        async function loadLiveDashboardData() {
+            try {
+                // Fetch live index data from /v1/index
+                const indexRes = await fetch('/v1/index');
+                const indexData = await indexRes.json();
+                
+                if (Array.isArray(indexData) && indexData.length > 0) {
+                    const labels = indexData.map(d => d.index_date);
+                    const values = indexData.map(d => d.index_value);
+                    
+                    const latestVal = values[values.length - 1];
+                    document.getElementById('metric-index-val').textContent = parseFloat(latestVal).toFixed(2);
+                    
+                    if (indexChart) {
+                        indexChart.data.labels = labels;
+                        indexChart.data.datasets[0].data = values;
+                        indexChart.update();
+                    }
+                }
+            } catch (err) {
+                console.log('Using default chart baseline', err);
+            }
+        }
+
         // Init Charts
         const ctx1 = document.getElementById('indexChart').getContext('2d');
-        new Chart(ctx1, {
+        indexChart = new Chart(ctx1, {
             type: 'line',
             data: {
-                labels: ['Jan 06', 'Jan 13', 'Jan 20', 'Jan 27', 'Feb 03', 'Feb 10', 'Feb 17', 'Feb 24', 'Aug 31'],
+                labels: ['Aug 01', 'Aug 05', 'Aug 10', 'Aug 15', 'Aug 20', 'Aug 25', 'Aug 30'],
                 datasets: [{
                     label: 'APIx Airfare Index',
-                    data: [100.0, 101.2, 100.8, 102.5, 103.1, 102.9, 103.8, 104.1, 104.28],
+                    data: [100.0, 100.72, 101.45, 102.18, 102.90, 103.62, 104.28],
                     borderColor: '#38bdf8',
                     backgroundColor: 'rgba(56, 189, 248, 0.1)',
                     fill: true,
@@ -496,6 +522,9 @@ APIx(t) = ∑ [ w_r × ( P_r(t) / P_r(0) ) ] × 100
                 out.textContent = '// Error: ' + err.message;
             }
         }
+
+        // Run on load
+        loadLiveDashboardData();
     </script>
 </body>
 </html>"""
