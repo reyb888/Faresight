@@ -24,7 +24,7 @@ import pandas as pd
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
 
-DATABASE_URL = os.environ["DATABASE_URL"]
+DATABASE_URL = os.environ["DATABASE_URL"].strip()
 
 # Base period: fixed once at project launch. See docs/DESIGN.md §4.1 —
 # this should be set to the first full week of clean data and then never

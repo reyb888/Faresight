@@ -23,11 +23,13 @@ class SupabaseLoaderPipeline:
         # insert-per-item is easier to reason about than bridging into
         # asyncio for this one write path. The async engine (api/db.py,
         # index/index_engine.py) is used everywhere else.
-        self.conn = psycopg2.connect(os.environ["DATABASE_URL_SYNC"])
+        url = os.environ["DATABASE_URL_SYNC"].strip()
+        self.conn = psycopg2.connect(url)
         self.conn.autocommit = True
 
     def close_spider(self, spider):
-        self.conn.close()
+        if getattr(self, "conn", None):
+            self.conn.close()
 
     def process_item(self, item, spider):
         with self.conn.cursor() as cur:

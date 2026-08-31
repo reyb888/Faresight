@@ -17,7 +17,7 @@ from datetime import date
 import pandas as pd
 from sqlalchemy import create_engine, text
 
-DATABASE_URL_SYNC = os.environ["DATABASE_URL_SYNC"]
+DATABASE_URL_SYNC = os.environ["DATABASE_URL_SYNC"].strip()
 
 # Robust outlier bound: median +/- K * MAD, chosen because fare distributions
 # are right-skewed (a plain mean/stddev bound is too easily dragged around by
