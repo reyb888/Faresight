@@ -149,3 +149,11 @@ async def get_backtest_results(session: AsyncSession = Depends(get_session)) -> 
     )
     rows = (await session.execute(query)).mappings().all()
     return [BacktestRow(**row) for row in rows]
+
+
+@router.get("/scrape/trigger")
+@router.post("/scrape/trigger")
+async def trigger_live_scrape() -> dict:
+    """Triggers an on-demand live scraping, cleaning, and index calculation batch."""
+    from pipeline.runner import run_live_scrape_batch
+    return run_live_scrape_batch()

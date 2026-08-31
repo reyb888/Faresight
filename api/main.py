@@ -224,6 +224,7 @@ async def root_portal() -> str:
             </div>
         </div>
         <div style="display: flex; gap: 1rem; align-items: center;">
+            <button onclick="runLiveScrapeTrigger()" class="btn-action" style="background: linear-gradient(135deg, #38bdf8, #818cf8); color: #000; font-weight: 700;">⚡ Trigger Live Scrape</button>
             <a href="/docs" target="_blank" class="btn-action" style="background: rgba(255,255,255,0.08); color: #fff;">OpenAPI Specs</a>
             <div class="status-pill">
                 <div class="status-dot"></div>
@@ -520,6 +521,24 @@ APIx(t) = ∑ [ w_r × ( P_r(t) / P_r(0) ) ] × 100
                 out.textContent = JSON.stringify(data, null, 2);
             } catch (err) {
                 out.textContent = '// Error: ' + err.message;
+            }
+        }
+
+        async function runLiveScrapeTrigger() {
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = '⏳ Scraping & Cleaning...';
+            btn.disabled = true;
+            try {
+                const res = await fetch('/v1/scrape/trigger');
+                const result = await res.json();
+                alert(`✅ Live Batch Scraped Successfully!\n\nQuotes Scraped: ${result.quotes_scraped}\nQuotes Cleaned: ${result.quotes_cleaned}\nNew APIx Index: ${result.apix_index_computed}`);
+                await loadLiveDashboardData();
+            } catch (err) {
+                alert('Scrape Error: ' + err.message);
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
             }
         }
 
