@@ -4,6 +4,8 @@
 # Invoked as the start command of the Render Cron Job (see render.yaml).
 set -euo pipefail
 
+export SCRAPY_SETTINGS_MODULE=scraper.settings
+
 TODAY=$(date -u +%F)
 ROUTES=("DEL-BOM" "DEL-BLR" "BOM-BLR" "DEL-CCU" "BLR-HYD" "MAA-DEL")
 WINDOWS=(1 7 15 30 45)
