@@ -72,7 +72,7 @@ async def root_portal() -> str:
     </div>
     <div class="hidden md:flex items-center gap-3">
       <a href="/docs" class="text-sm font-medium text-slate-600 hover:text-slate-900">API Docs</a>
-      <a href="http://localhost:5000" class="px-4 py-2 rounded-full bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 transition">Open Dashboard</a>
+      <a href="http://localhost:5000" target="_blank" rel="noopener" class="px-4 py-2 rounded-full bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 transition flex items-center gap-1.5">Open Dashboard <i class="ph ph-arrow-square-out text-xs"></i></a>
     </div>
   </div>
 </nav>
@@ -84,13 +84,17 @@ async def root_portal() -> str:
       <h1 class="text-4xl md:text-5xl font-semibold tracking-tight leading-none">A live airfare index<br>for India</h1>
       <p class="mt-4 text-base leading-relaxed text-slate-600 max-w-[52ch]">DGCA averages arrive two months late. Faresight scrapes airlines and OTAs daily, cleans the data, and publishes a Base 100 index weighted by passenger traffic.</p>
       <div class="mt-6 flex gap-3">
-        <a href="http://localhost:5000" class="px-5 py-3 rounded-full bg-slate-900 text-white text-sm font-semibold">View live index</a>
+        <a href="http://localhost:5000" target="_blank" rel="noopener" class="px-5 py-3 rounded-full bg-slate-900 text-white text-sm font-semibold flex items-center gap-1.5 hover:bg-slate-800 transition">View live index <i class="ph ph-arrow-square-out text-xs"></i></a>
         <a href="/docs" class="px-5 py-3 rounded-full border border-slate-200 bg-white text-sm font-semibold">Explore API</a>
       </div>
       <div class="mt-6 flex gap-6 text-xs text-slate-500">
         <span class="flex items-center gap-1.5"><i class="ph ph-check-circle text-emerald-600"></i> Daily scrape</span>
         <span class="flex items-center gap-1.5"><i class="ph ph-check-circle text-emerald-600"></i> MAD outlier filter</span>
         <span class="flex items-center gap-1.5"><i class="ph ph-check-circle text-emerald-600"></i> DGCA weighted</span>
+      </div>
+      <div class="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-xs font-medium">
+        <i class="ph ph-info"></i>
+        <span>Dashboard runs separately on <code class="mono bg-white px-1 rounded">localhost:5000</code> — click buttons above to open in new tab</span>
       </div>
     </div>
     <div class="relative">
