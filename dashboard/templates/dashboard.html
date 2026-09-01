@@ -1,327 +1,265 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Faresight — Real-time Airfare Price Index for India • SIH26056</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Faresight - Real-time Airfare Price Index for India</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
   <style>
-    :root{
-      --bg:#fdfcf8; --card:#ffffff; --ink:#171412; --muted:#6b6560; --line:#e9e3da;
-      --accent:#ff5a1f; --accent-2:#1a7a4c; --accent-soft:#fff0e8; --radius:18px;
-      --mono:'JetBrains Mono',monospace; --sans:'DM Sans',system-ui,sans-serif;
-    }
-    *{box-sizing:border-box}
-    html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
-    a{color:inherit}
-    .wrap{max-width:1120px;margin:0 auto;padding:24px 20px 48px}
-    /* top bar */
-    .topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px}
-    .brand{display:flex;align-items:center;gap:12px}
-    .logo{width:36px;height:36px;border-radius:10px;background:var(--ink);color:#fff;display:grid;place-items:center;font-weight:700;letter-spacing:-0.5px}
-    .brand h1{font-size:18px;margin:0;letter-spacing:-0.6px;line-height:1}
-    .brand p{margin:2px 0 0;font-size:12px;color:var(--muted)}
-    .pills{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-    .pill{font-size:12px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;padding:7px 10px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--muted)}
-    .pill.dark{background:var(--ink);color:#fff;border-color:var(--ink)}
-    .pill.accent{background:var(--accent-soft);border-color:#ffd8c4;color:#8a2a00}
-    .dot{width:8px;height:8px;border-radius:999px;background:var(--accent-2);display:inline-block}
-    /* hero */
-    .hero{display:grid;grid-template-columns:1.15fr .85fr;gap:16px;margin-bottom:16px}
-    .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px}
-    .hero h2{font-size:26px;line-height:1.15;letter-spacing:-.7px;margin:0 0 8px}
-    .hero h2 .k{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-right:8px;vertical-align:middle}
-    .hero p{font-size:13.5px;line-height:1.55;color:#3a3632;margin:0}
-    .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
-    .step{border:1px solid var(--line);border-radius:14px;padding:12px;background:#fffdf9}
-    .step b{font-size:12px;display:block;margin-bottom:4px}
-    .step span{font-size:12px;color:var(--muted);line-height:1.45;display:block}
-    .formula{margin-top:14px;background:#171412;color:#fff;border-radius:12px;padding:12px 14px;font-family:var(--mono);font-size:12px;line-height:1.5}
-    .formula em{color:#ff9e70;font-style:normal}
-    /* index card */
-    .index-card{display:flex;flex-direction:column;gap:14px}
-    .index-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
-    .kicker{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
-    .big{font-family:var(--mono);font-size:44px;line-height:1;letter-spacing:-1.5px;font-weight:700}
-    .big small{font-size:16px;letter-spacing:0;color:var(--muted);font-weight:500}
-    .delta{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:6px 9px;border-radius:999px;border:1px solid #d8f0e0;background:#edf7f0;color:#0f5b2f}
-    .delta.down{background:#fff0e8;border-color:#ffd8c4;color:#8a2a00}
-    .meta{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-    .meta div{border:1px solid var(--line);border-radius:12px;padding:10px;background:#fffdf9}
-    .meta dt{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:0 0 4px}
-    .meta dd{margin:0;font-family:var(--mono);font-size:13px;font-weight:600}
-    .spark{height:72px;border:1px dashed var(--line);border-radius:12px;display:grid;place-items:center;color:var(--muted);font-size:12px;background:#fffefb}
-    /* controls */
-    .controls{position:sticky;top:12px;z-index:5;background:rgba(253,252,248,.85);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:var(--radius);padding:14px;display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;margin-bottom:16px}
-    .control{flex:1;min-width:220px}
-    .control label{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;display:block;margin-bottom:8px}
-    .chips{display:flex;flex-wrap:wrap;gap:7px}
-    .chip{appearance:none;border:1px solid var(--line);background:var(--card);padding:8px 11px;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer;transition:.15s}
-    .chip:hover{border-color:#d9d0c2}
-    .chip.active{background:var(--ink);color:#fff;border-color:var(--ink)}
-    .chip small{font-weight:500;opacity:.7;margin-left:4px}
-    .seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:3px;background:var(--card)}
-    .seg button{appearance:none;border:0;background:transparent;padding:7px 12px;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer;color:var(--muted)}
-    .seg button.active{background:var(--ink);color:#fff}
-    .help{font-size:12px;color:var(--muted);line-height:1.4}
-    /* sections */
-    .section{margin-bottom:16px}
-    .section-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:0 0 10px}
-    .section-head h3{margin:0;font-size:15px;letter-spacing:-.3px}
-    .section-head p{margin:0;font-size:12px;color:var(--muted)}
-    .grid-2{display:grid;grid-template-columns:1.45fr .9fr;gap:16px}
-    .chart{height:340px}
-    .chart.tall{height:380px}
-    table{width:100%;border-collapse:collapse}
-    th{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:left;padding:8px 8px;border-bottom:1px solid var(--line);font-weight:600}
-    td{font-size:13px;padding:9px 8px;border-bottom:1px solid #f0ebe3}
-    td.num{font-family:var(--mono);text-align:right;font-weight:500}
-    .empty{padding:28px;text-align:center;color:var(--muted);font-size:13px;line-height:1.5;border:1px dashed var(--line);border-radius:12px;background:#fffefb}
-    .bar{display:flex;gap:8px;align-items:center;justify-content:flex-end;margin-top:10px}
-    .btn{appearance:none;border:1px solid var(--line);background:var(--card);padding:8px 12px;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer}
-    .btn.primary{background:var(--ink);border-color:var(--ink);color:#fff}
-    .btn:disabled{opacity:.5;cursor:not-allowed}
-    .heat-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
-    .heat-cell{border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--card);text-align:center}
-    .heat-cell b{font-family:var(--mono);font-size:13px;display:block}
-    .heat-cell span{font-size:12px;color:var(--muted)}
-    .legend{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--muted);margin-top:8px}
-    .swatch{width:10px;height:10px;border-radius:3px;background:var(--accent)}
-    /* footer */
-    .footer{margin-top:22px;border-top:1px solid var(--line);padding-top:16px;display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;font-size:12px;color:var(--muted);line-height:1.5}
-    @media (max-width:900px){ .hero{grid-template-columns:1fr} .grid-2{grid-template-columns:1fr} .controls{position:static} .steps{grid-template-columns:1fr} .big{font-size:36px} .heat-grid{grid-template-columns:repeat(3,1fr)} }
+    :root{--ink:#0f172a;--line:#e2e8f0;--muted:#64748b;--accent:#0e4a7a}
+    html{scroll-behavior:smooth}
+    body{font-family:'DM Sans',system-ui,sans-serif;background:#fcfdf8;color:var(--ink)}
+    .mono{font-family:'JetBrains Mono',monospace}
+    .reveal{opacity:0;transform:translateY(12px);transition:opacity .6s cubic-bezier(.16,1,.3,1),transform .6s cubic-bezier(.16,1,.3,1)}
+    .reveal.in{opacity:1;transform:none}
+    @media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}}
   </style>
 </head>
-<body>
-  <div class="wrap">
-    <div class="topbar">
-      <div class="brand">
-        <div class="logo">F</div>
-        <div>
-          <h1>Faresight</h1>
-          <p>Real-time Airfare Price Index for India • SIH26056</p>
-        </div>
-      </div>
-      <div class="pills">
-        <span class="pill dark">MoSPI • NSO</span>
-        <span class="pill"><span class="dot"></span> Live pipeline</span>
-        <span class="pill accent">Base 100 — Jan 6, 2026</span>
+<body class="antialiased">
+<nav class="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-slate-200">
+  <div class="max-w-7xl mx-auto px-6 h-[64px] flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-slate-900 text-white grid place-items-center font-bold">F</div>
+      <div>
+        <div class="text-sm font-semibold tracking-tight leading-none">Faresight</div>
+        <div class="text-xs text-slate-500">MoSPI • SIH26056</div>
       </div>
     </div>
-
-    <div class="hero">
-      <div class="card">
-        <h2><span class="k">SIH26056</span> India has no real-time airfare inflation index. Faresight builds one.</h2>
-        <p>DGCA monthly averages arrive 2 months late. Faresight scrapes airline + OTA sites every day across <b>6 representative routes</b> × <b>5 booking windows</b>, removes outliers, and publishes a <b>Base-100</b> index weighted by DGCA traffic. 100 = price in the base week. 104.2 = 4.2% higher.</p>
-        <div class="steps">
-          <div class="step"><b>1. Observe</b><span>Scrape IndiGo, Air India, Akasa, SpiceJet, MMT, ixigo, Goibibo daily</span></div>
-          <div class="step"><b>2. Clean</b><span>De-duplicate, flag outliers with MAD, keep median fare per cell</span></div>
-          <div class="step"><b>3. Index</b><span>Price relative × DGCA weight → daily / weekly / monthly APIx</span></div>
-        </div>
-        <div class="formula">APIx(t) = Σ [ <em>w<sub>r</sub></em> × (<em>P<sub>r</sub>(t)</em> / <em>P<sub>r</sub>(0)</em>) ] × 100 &nbsp;·&nbsp; r = route</div>
-        <p class="help" style="margin-top:10px">Windows: <b>T+1</b> = tomorrow, <b>T+7</b> = in 1 week, <b>T+15</b> = 2 weeks, <b>T+30</b> = 1 month, <b>T+45</b> = 45 days. Advance purchase matters — same flight is cheaper 30 days out.</p>
-      </div>
-      <div class="card index-card">
-        <div class="index-top">
-          <div>
-            <div class="kicker">APIx — All-India Daily</div>
-            <div class="big" id="idx-value">— <small>/ 100</small></div>
-            <div id="idx-sub" class="help">Loading index…</div>
-          </div>
-          <div id="idx-delta" class="delta">—</div>
-        </div>
-        <div id="idx-spark" class="spark">Trend sparkline loads with daily index</div>
-        <div class="meta">
-          <div><dt>Routes</dt><dd id="meta-routes">6</dd></div>
-          <div><dt>Windows</dt><dd>T+1 … T+45</dd></div>
-          <div><dt>Quotes today</dt><dd id="meta-quotes">—</dd></div>
-        </div>
-        <p class="help">Weighted by DGCA passenger traffic. Base week never changes. Missing routes are re-weighted, not zero-filled.</p>
-      </div>
-    </div>
-
-    <div class="controls">
-      <div class="control">
-        <label>Route — pick one to explore</label>
-        <div class="chips" id="route-chips"></div>
-        <div class="help" style="margin-top:6px">6 routes from the SIH26056 basket. High-traffic routes move the index more.</div>
-      </div>
-      <div class="control" style="max-width:360px">
-        <label>Advance-purchase window</label>
-        <div class="chips" id="window-chips"></div>
-      </div>
-      <div class="control" style="min-width:160px;flex:.6">
-        <label>Frequency</label>
-        <div class="seg" id="freq-seg">
-          <button data-freq="daily" class="active">Daily</button>
-          <button data-freq="weekly">Weekly</button>
-          <button data-freq="monthly">Monthly</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="grid-2 section">
-      <div class="card">
-        <div class="section-head"><h3 id="trend-title">Index trend</h3><p id="trend-sub">Daily • Base 100</p></div>
-        <div id="main-chart" class="chart"></div>
-        <div class="bar">
-          <button class="btn" id="btn-csv-main">Download CSV</button>
-          <button class="btn primary" id="btn-compare">Compare routes</button>
-        </div>
-      </div>
-      <div class="card">
-        <div class="section-head"><h3>Route detail</h3><p id="route-sub">Select a route above</p></div>
-        <div id="route-empty" class="empty">Pick a route to see median fare history, quote counts and the cheapest booking window for that corridor. Try <b>Delhi ↔ Mumbai</b> first.</div>
-        <div id="route-table-wrap" style="display:none">
-          <table>
-            <thead><tr><th>Date</th><th class="num">Median fare</th><th class="num">Quotes</th></tr></thead>
-            <tbody id="route-tbody"></tbody>
-          </table>
-          <div class="bar"><button class="btn" id="btn-csv-route">Download route CSV</button></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="grid-2 section">
-      <div class="card">
-        <div class="section-head"><h3>Heatmap — fare by window (latest day)</h3><p>Spot the cheapest window per corridor</p></div>
-        <div id="heatmap" class="heat-grid"></div>
-        <div class="legend"><span class="swatch"></span> darker = higher median fare · values are INR · outliers removed</div>
-        <div id="heatmap-empty" class="empty" style="display:none">No heatmap data yet — run the daily batch.</div>
-      </div>
-      <div class="card">
-        <div class="section-head"><h3>Lead-time curve</h3><p id="elasticity-sub">Fare vs. days booked in advance</p></div>
-        <div id="elasticity-chart" class="chart" style="height:280px"></div>
-        <p class="help">Typically T+30 / T+45 is cheapest. T+1 spikes before departure. This curve is what makes the index lead-time aware.</p>
-      </div>
-    </div>
-
-    <div class="card section">
-      <div class="section-head"><h3>Validation — APIx vs DGCA</h3><p>Monthly backtest • do we track published averages?</p></div>
-      <div id="backtest-chart" class="chart tall"></div>
-      <div style="overflow:auto;margin-top:10px">
-        <table>
-          <thead><tr><th>Period</th><th class="num">APIx</th><th class="num">DGCA avg fare</th><th class="num">Deviation</th></tr></thead>
-          <tbody id="backtest-tbody"><tr><td colspan="4" class="empty" style="border:0">Loading backtest…</td></tr></tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="footer">
-      <span><b>Faresight</b> • SIH26056 • Ministry of Statistics & Programme Implementation • Dagster-weighted • MAD outlier • Base 100</span>
-      <span>Sources: IndiGo, Air India, Akasa, SpiceJet, MakeMyTrip, ixigo, Goibibo • API: <code>/v1/index</code> <code>/v1/routes/…</code> <code>/v1/heatmap</code></span>
+    <div class="hidden md:flex items-center gap-2 text-sm">
+      <a href="/#index" class="px-3 py-1.5 rounded-full hover:bg-slate-100">Index</a>
+      <a href="/#routes" class="px-3 py-1.5 rounded-full hover:bg-slate-100">Routes</a>
+      <a href="/docs" class="px-4 py-2 rounded-full bg-slate-900 text-white font-semibold">API Docs</a>
     </div>
   </div>
+</nav>
+
+<main class="max-w-7xl mx-auto px-6">
+  <section class="grid md:grid-cols-2 gap-8 items-center pt-12 md:pt-16 pb-8 reveal">
+    <div>
+      <p class="text-xs font-semibold tracking-widest uppercase text-slate-500">SIH26056 • For the Consumer Price Index</p>
+      <h1 class="mt-3 text-4xl md:text-5xl font-semibold tracking-tight leading-none">A live airfare index for India</h1>
+      <p class="mt-4 text-base leading-relaxed text-slate-600 max-w-[52ch]">DGCA averages arrive two months late. Faresight scrapes airlines and OTAs daily and publishes a Base 100 index weighted by passenger traffic.</p>
+      <div class="mt-6 flex gap-3">
+        <a href="#index" class="px-5 py-3 rounded-full bg-slate-900 text-white text-sm font-semibold">View live index</a>
+        <a href="/docs" class="px-5 py-3 rounded-full border border-slate-200 bg-white text-sm font-semibold">Explore API</a>
+      </div>
+      <div class="mt-6 flex flex-wrap gap-3 text-xs text-slate-600">
+        <span class="inline-flex items-center gap-1.5"><i class="ph ph-calendar-check text-slate-700"></i> Daily scrape</span>
+        <span class="inline-flex items-center gap-1.5"><i class="ph ph-funnel text-slate-700"></i> Outliers removed</span>
+        <span class="inline-flex items-center gap-1.5"><i class="ph ph-scales text-slate-700"></i> DGCA weighted</span>
+      </div>
+    </div>
+    <div class="relative">
+      <img src="https://picsum.photos/seed/faresight-india-flight/800/600" alt="Aerial view over India showing flight corridors" class="w-full h-[380px] object-cover rounded-2xl border border-slate-200">
+      <div class="absolute -bottom-4 -left-4 bg-white border border-slate-200 rounded-2xl p-4 shadow-sm max-w-[260px]">
+        <div class="text-xs font-semibold tracking-widest uppercase text-slate-500">Faresight Daily</div>
+        <div id="hero-index" class="mono text-2xl font-semibold mt-1">104.24 <span class="text-sm text-slate-500 font-normal">/ 100</span></div>
+        <div class="text-xs text-emerald-700 mt-1">Up 4.24 percent versus base week Jan 6 2026</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="index" class="grid md:grid-cols-12 gap-6 py-6 border-y border-slate-200 reveal">
+    <div class="md:col-span-5 bg-white border border-slate-200 rounded-2xl p-6">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <div class="text-xs font-semibold tracking-widest uppercase text-slate-500">Faresight Daily</div>
+          <div id="idx-value" class="mono text-4xl font-semibold tracking-tight mt-2">- <span class="text-base text-slate-500 font-normal">/ 100</span></div>
+          <div id="idx-sub" class="text-sm text-slate-600 mt-2">Loading index</div>
+        </div>
+        <div id="idx-delta" class="px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold">-</div>
+      </div>
+      <div id="idx-spark" class="mt-4 h-[72px] rounded-xl border border-dashed border-slate-200 bg-slate-50 grid place-items-center text-xs text-slate-500">Trend sparkline loads with daily index</div>
+      <div class="mt-4 grid grid-cols-3 divide-x divide-slate-200 border-y border-slate-200">
+        <div class="py-3 px-3"><div class="text-xs tracking-widest uppercase text-slate-500 font-semibold">Routes</div><div id="meta-routes" class="mono text-sm font-semibold mt-1">6</div></div>
+        <div class="py-3 px-3"><div class="text-xs tracking-widest uppercase text-slate-500 font-semibold">Windows</div><div class="mono text-sm font-semibold mt-1">T+1 to T+45</div></div>
+        <div class="py-3 px-3"><div class="text-xs tracking-widest uppercase text-slate-500 font-semibold">Quotes today</div><div id="meta-quotes" class="mono text-sm font-semibold mt-1">-</div></div>
+      </div>
+      <p class="text-xs leading-relaxed text-slate-500 mt-3">Weighted by DGCA traffic. Base week never changes. Missing routes are reweighted, not zero filled.</p>
+    </div>
+    <div class="md:col-span-7 bg-slate-900 text-white rounded-2xl p-6 relative overflow-hidden">
+      <img src="https://picsum.photos/seed/faresight-method-departure/800/500" alt="Airport departure board close up" class="absolute inset-0 w-full h-full object-cover opacity-15">
+      <div class="relative">
+        <h2 class="font-semibold tracking-tight">How the index is built</h2>
+        <p class="text-sm leading-relaxed text-slate-300 mt-2 max-w-[60ch]">We sample each route and window, keep the median fare, then weight by DGCA traffic. No survey, just observed prices.</p>
+        <div class="mt-4 divide-y divide-white/10 border-y border-white/10">
+          <div class="flex gap-3 items-start py-3"><span class="w-7 h-7 rounded-full bg-white text-slate-900 grid place-items-center text-xs font-bold">1</span><div><div class="text-sm font-semibold">Observe</div><div class="text-xs text-slate-300">Scrape IndiGo, Air India, Akasa, SpiceJet, MakeMyTrip, ixigo, Goibibo daily</div></div></div>
+          <div class="flex gap-3 items-start py-3"><span class="w-7 h-7 rounded-full bg-white text-slate-900 grid place-items-center text-xs font-bold">2</span><div><div class="text-sm font-semibold">Clean</div><div class="text-xs text-slate-300">De duplicate, flag outliers with MAD, keep median per cell</div></div></div>
+          <div class="flex gap-3 items-start py-3"><span class="w-7 h-7 rounded-full bg-white text-slate-900 grid place-items-center text-xs font-bold">3</span><div><div class="text-sm font-semibold">Weight</div><div class="text-xs text-slate-300">Price relative times DGCA share, then Base 100</div></div></div>
+        </div>
+        <div class="mt-4 mono text-xs bg-white rounded-xl text-slate-900 p-3">F(t) = sum [ w × ( P(t) / P(0) ) ] × 100</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sticky top-[64px] z-30 bg-[#fcfdf8]/90 backdrop-blur border border-slate-200 rounded-2xl p-4 mt-6 flex flex-wrap gap-4 items-center justify-between reveal">
+    <div class="flex-1 min-w-[220px]">
+      <div class="text-xs font-semibold tracking-widest uppercase text-slate-500 mb-2">Route</div>
+      <div id="route-chips" class="flex flex-wrap gap-2"></div>
+    </div>
+    <div class="flex-1 min-w-[220px]">
+      <div class="text-xs font-semibold tracking-widest uppercase text-slate-500 mb-2">Advance purchase window</div>
+      <div id="window-chips" class="flex flex-wrap gap-2"></div>
+    </div>
+    <div>
+      <div class="text-xs font-semibold tracking-widest uppercase text-slate-500 mb-2">Frequency</div>
+      <div id="freq-seg" class="inline-flex p-1 rounded-full border border-slate-200 bg-white">
+        <button data-freq="daily" class="px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-900 text-white">Daily</button>
+        <button data-freq="weekly" class="px-3 py-1.5 rounded-full text-xs font-semibold text-slate-600">Weekly</button>
+        <button data-freq="monthly" class="px-3 py-1.5 rounded-full text-xs font-semibold text-slate-600">Monthly</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="routes" class="grid lg:grid-cols-12 gap-6 mt-6 reveal">
+    <div class="lg:col-span-8 bg-white border border-slate-200 rounded-2xl p-6">
+      <div class="flex items-baseline justify-between gap-4">
+        <h2 id="trend-title" class="font-semibold tracking-tight">Index trend</h2>
+        <span id="trend-sub" class="text-xs text-slate-500">Daily • Base 100</span>
+      </div>
+      <div id="main-chart" class="h-[340px] mt-3"></div>
+      <div class="flex justify-end gap-2 mt-3">
+        <button id="btn-csv-main" class="px-3 py-1.5 rounded-full border border-slate-200 bg-white text-xs font-semibold">Download CSV</button>
+        <button id="btn-compare" class="px-3 py-1.5 rounded-full bg-slate-900 text-white text-xs font-semibold">Compare routes</button>
+      </div>
+    </div>
+    <div class="lg:col-span-4 bg-white border border-slate-200 rounded-2xl p-6">
+      <h2 class="font-semibold tracking-tight">Route detail</h2>
+      <p id="route-sub" class="text-xs text-slate-500 mt-1">Select a route above</p>
+      <div id="route-empty" class="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center text-sm leading-relaxed text-slate-600">Pick a route to see median fare history and quote counts. Try <b>Delhi to Mumbai</b> first.</div>
+      <div id="route-table-wrap" class="hidden mt-4">
+        <table class="w-full text-sm">
+          <thead class="text-xs tracking-widest uppercase text-slate-500 border-b border-slate-200"><tr><th class="py-2 text-left font-semibold">Date</th><th class="py-2 text-right font-semibold">Median fare</th><th class="py-2 text-right font-semibold">Quotes</th></tr></thead>
+          <tbody id="route-tbody" class="divide-y divide-slate-100"></tbody>
+        </table>
+        <button id="btn-csv-route" class="mt-3 w-full py-2 rounded-full border border-slate-200 bg-white text-xs font-semibold">Download route CSV</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="grid lg:grid-cols-2 gap-6 mt-6 reveal">
+    <div class="bg-white border border-slate-200 rounded-2xl p-6">
+      <h2 class="font-semibold tracking-tight">Fare by window</h2>
+      <p class="text-xs text-slate-500 mt-1">Latest day • median fare per window • darker is higher</p>
+      <div id="heatmap" class="grid grid-cols-3 sm:grid-cols-5 gap-2 mt-4"></div>
+      <div id="heatmap-empty" class="hidden mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-600">No heatmap data yet. Run the daily batch.</div>
+    </div>
+    <div class="bg-white border border-slate-200 rounded-2xl p-6">
+      <h2 class="font-semibold tracking-tight">Lead time curve</h2>
+      <p id="elasticity-sub" class="text-xs text-slate-500 mt-1">Fare versus days booked in advance</p>
+      <div id="elasticity-chart" class="h-[280px] mt-3"></div>
+      <p class="text-xs leading-relaxed text-slate-500 mt-2">T+30 and T+45 are usually cheapest. T+1 spikes before departure. This curve makes the index advance purchase aware.</p>
+    </div>
+  </section>
+
+  <section class="bg-white border border-slate-200 rounded-2xl p-6 mt-6 reveal">
+    <div class="flex items-baseline justify-between gap-4">
+      <h2 class="font-semibold tracking-tight">Validation against DGCA</h2>
+      <span class="text-xs text-slate-500">Monthly backtest</span>
+    </div>
+    <div id="backtest-chart" class="h-[320px] mt-3"></div>
+    <div class="overflow-auto mt-4">
+      <table class="w-full text-sm">
+        <thead class="text-xs tracking-widest uppercase text-slate-500 border-b border-slate-200"><tr><th class="py-2 text-left font-semibold">Period</th><th class="py-2 text-right font-semibold">Faresight</th><th class="py-2 text-right font-semibold">DGCA avg</th><th class="py-2 text-right font-semibold">Deviation</th></tr></thead>
+        <tbody id="backtest-tbody"><tr><td colspan="4" class="py-6 text-center text-sm text-slate-500">Loading backtest</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer class="py-8 text-center text-xs leading-relaxed text-slate-500 border-t border-slate-200 mt-8">Ministry of Statistics and Programme Implementation • SIH 2026 SIH26056 • Faresight • Sources: IndiGo, Air India, Akasa, SpiceJet, MakeMyTrip, ixigo, Goibibo • API: /v1/index /v1/routes /v1/heatmap</footer>
+</main>
 
 <script>
 const ROUTES = {{ routes | tojson }};
 const WINDOWS = {{ windows | tojson }};
 const WINDOW_LABELS = {{ window_labels | tojson }};
 let state = { routeId: ROUTES[0]?.id || 'del-bom', window: 7, freq: 'daily', indexData: [], routePoints: [] };
-
-const fmtINR = v => '₹' + Number(v).toLocaleString('en-IN', {maximumFractionDigits:0});
+const fmtINR = v => 'Rs ' + Number(v).toLocaleString('en-IN', {maximumFractionDigits:0});
 const fmtDate = s => { try{ return new Date(s).toLocaleDateString('en-IN',{day:'2-digit',month:'short'}) }catch{ return s } };
-
-function setActiveChip(container, value){
-  [...container.children].forEach(c=> c.classList.toggle('active', c.dataset.value === String(value)));
+function setActive(container, value){
+  [...container.children].forEach(c=> c.classList.toggle('!bg-slate-900', c.dataset.value===String(value)));
+  [...container.children].forEach(c=> c.classList.toggle('!text-white', c.dataset.value===String(value)));
 }
-
 function renderChips(){
-  const rc = document.getElementById('route-chips');
-  rc.innerHTML='';
+  const rc=document.getElementById('route-chips'); rc.innerHTML='';
   ROUTES.forEach(r=>{
     const b=document.createElement('button');
-    b.className='chip'+(r.id===state.routeId?' active':'');
-    b.dataset.value=r.id;
-    b.innerHTML=`${r.name} <small>${r.traffic}</small>`;
-    b.onclick=()=>{ state.routeId=r.id; setActiveChip(rc, r.id); updateAll(); };
+    b.dataset.value=r.id; b.className='px-3 py-1.5 rounded-full border border-slate-200 bg-white text-xs font-semibold hover:border-slate-300 transition '+(r.id===state.routeId?'!bg-slate-900 !text-white !border-slate-900':'');
+    b.textContent=r.name; b.title=r.traffic;
+    b.onclick=()=>{ state.routeId=r.id; renderChips(); updateAll(); };
     rc.appendChild(b);
   });
-  const wc=document.getElementById('window-chips');
-  wc.innerHTML='';
+  const wc=document.getElementById('window-chips'); wc.innerHTML='';
   WINDOWS.forEach(w=>{
     const b=document.createElement('button');
-    b.className='chip'+(w===state.window?' active':'');
-    b.dataset.value=String(w);
-    b.textContent=`T+${w} · ${WINDOW_LABELS[w]}`;
-    b.onclick=()=>{ state.window=w; setActiveChip(wc,String(w)); updateAll(); };
+    b.dataset.value=String(w); b.className='px-3 py-1.5 rounded-full border border-slate-200 bg-white text-xs font-semibold hover:border-slate-300 transition '+(w===state.window?'!bg-slate-900 !text-white !border-slate-900':'');
+    b.textContent='T+'+w+' '+WINDOW_LABELS[w];
+    b.onclick=()=>{ state.window=w; renderChips(); updateAll(); };
     wc.appendChild(b);
   });
-  document.getElementById('freq-seg').addEventListener('click', e=>{
-    const btn=e.target.closest('button[data-freq]'); if(!btn) return;
-    state.freq=btn.dataset.freq;
-    [...document.getElementById('freq-seg').children].forEach(b=> b.classList.toggle('active', b===btn));
-    loadIndex(); updateAll();
-  });
 }
+document.getElementById('freq-seg').addEventListener('click', e=>{
+  const btn=e.target.closest('button[data-freq]'); if(!btn) return;
+  state.freq=btn.dataset.freq;
+  ;[...e.currentTarget.children].forEach(b=>{ b.classList.remove('bg-slate-900','text-white'); b.classList.add('text-slate-600')});
+  btn.classList.add('bg-slate-900','text-white'); btn.classList.remove('text-slate-600');
+  loadIndex();
+});
 
 async function loadIndex(){
   try{
     const res=await fetch(`/api/index?frequency=${state.freq}`);
     const data=await res.json();
     state.indexData = Array.isArray(data)? data : [];
-    renderIndex();
-    renderMainChart();
+    renderIndex(); renderMainChart();
   }catch{ renderIndex(true) }
 }
-
 function renderIndex(failed){
   const el=document.getElementById('idx-value');
   const sub=document.getElementById('idx-sub');
   const delta=document.getElementById('idx-delta');
-  const spark=document.getElementById('idx-spark');
-  const quotes=document.getElementById('meta-quotes');
+  const hero=document.getElementById('hero-index');
   if(failed || !state.indexData.length){
-    el.innerHTML='— <small>/ 100</small>'; sub.textContent='No index rows yet — run the batch.'; delta.textContent='—'; delta.className='delta';
-    spark.textContent='No data yet'; quotes.textContent='—'; return;
+    el.innerHTML='- <span class="text-base text-slate-500 font-normal">/ 100</span>'; sub.textContent='No index rows yet. Run the batch.'; delta.textContent='-'; return;
   }
   const last=state.indexData[state.indexData.length-1];
   const prev=state.indexData[state.indexData.length-2];
-  el.innerHTML=`${Number(last.index_value).toFixed(2)} <small>/ 100</small>`;
+  el.innerHTML=`${Number(last.index_value).toFixed(2)} <span class="text-base text-slate-500 font-normal">/ 100</span>`;
+  if(hero) hero.innerHTML=`${Number(last.index_value).toFixed(2)} <span class="text-sm text-slate-500 font-normal">/ 100</span>`;
   const chg = prev ? Number(last.index_value) - Number(prev.index_value) : 0;
   const pct = prev ? (chg/Number(prev.index_value)*100) : 0;
-  delta.textContent = (chg>=0? '▲ ':'▼ ') + Math.abs(chg).toFixed(2) + ` (${Math.abs(pct).toFixed(2)}% vs prev)`;
-  delta.className = 'delta' + (chg<0 ? ' down' : '');
+  delta.textContent = (chg>=0? 'Up ' : 'Down ') + Math.abs(chg).toFixed(2) + ' (' + Math.abs(pct).toFixed(2) + '% vs prev)';
+  delta.className = 'px-3 py-1.5 rounded-full border text-xs font-semibold ' + (chg<0 ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-emerald-50 border-emerald-200 text-emerald-800');
   sub.textContent = `${state.freq} • base ${last.base_period_ref} • ${last.route_count} routes • ${last.quote_count} quotes`;
-  quotes.textContent = String(last.quote_count);
   document.getElementById('meta-routes').textContent = String(last.route_count);
-  // sparkline
+  document.getElementById('meta-quotes').textContent = String(last.quote_count);
   const x = state.indexData.map(d=>d.index_date);
   const y = state.indexData.map(d=> Number(d.index_value));
-  Plotly.newPlot('idx-spark', [{x,y, type:'scatter', mode:'lines', line:{color:'#ff5a1f',width:2}, fill:'tonexty', fillcolor:'rgba(255,90,31,.08)'}],
+  Plotly.newPlot('idx-spark', [{x,y, type:'scatter', mode:'lines', line:{color:'#0e4a7a',width:2}, fill:'tozeroy', fillcolor:'rgba(14,74,122,0.08)'}],
     {margin:{l:6,r:6,t:6,b:18}, xaxis:{visible:false}, yaxis:{visible:false}, paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', displayModeBar:false}, {displayModeBar:false, staticPlot:true});
 }
-
 function renderMainChart(){
-  const mode = document.getElementById('trend-title');
-  // we show index trend by default; if route has points we overlay route fare history scaled
-  if(!state.indexData.length){ Plotly.newPlot('main-chart', [], {title:'No data'}); return; }
+  if(!state.indexData.length){ Plotly.newPlot('main-chart', [], {paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)'}); return; }
   const x = state.indexData.map(d=>d.index_date);
   const y = state.indexData.map(d=> Number(d.index_value));
-  const traceIdx = {x, y, name:'APIx', type:'scatter', mode:'lines', line:{color:'#171412',width:2.2}};
-  const layout = {
-    margin:{l:48,r:12,t:10,b:28}, paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)',
-    xaxis:{gridcolor:'#f0ebe3', tickfont:{size:11}}, yaxis:{gridcolor:'#f0ebe3', title:{text:'Index (base 100)', font:{size:11}}, tickfont:{size:11}},
-    legend:{orientation:'h', y:1.02, x:0, font:{size:11}}, font:{family:'Inter'},
-  };
-  // if route points loaded, add second axis for fare
+  const traceIdx = {x, y, name:'Faresight', type:'scatter', mode:'lines', line:{color:'#0f172a',width:2.2}};
   let data=[traceIdx];
-  let layout2={...layout};
+  let layout = {margin:{l:48,r:12,t:10,b:28}, paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', xaxis:{gridcolor:'#f1f5f9', tickfont:{size:11}}, yaxis:{gridcolor:'#f1f5f9', title:{text:'Index (base 100)', font:{size:11}}, tickfont:{size:11}}, legend:{orientation:'h', y:1.02, x:0, font:{size:11}}, font:{family:'DM Sans'}};
   if(state.routePoints && state.routePoints.length){
     const rx = state.routePoints.map(p=>p.date);
     const ry = state.routePoints.map(p=> Number(p.median_fare));
-    data.push({x:rx, y:ry, name: `${state.routeId.toUpperCase()} median fare`, type:'scatter', mode:'lines', line:{color:'#ff5a1f', width:2}, yaxis:'y2'});
-    layout2.yaxis2={title:{text:'Median fare (₹)', font:{size:11}}, overlaying:'y', side:'right', gridcolor:'rgba(0,0,0,0)', tickfont:{size:11}};
-    mode.textContent=`Index + ${ROUTES.find(r=>r.id===state.routeId)?.name || ''} — ${WINDOW_LABELS[state.window]}`;
-    document.getElementById('trend-sub').textContent=`${state.freq} • T+${state.window}`;
+    data.push({x:rx, y:ry, name: (ROUTES.find(r=>r.id===state.routeId)?.name || state.routeId) + ' median fare', type:'scatter', mode:'lines', line:{color:'#0e4a7a', width:2}, yaxis:'y2'});
+    layout.yaxis2={title:{text:'Median fare (Rs)', font:{size:11}}, overlaying:'y', side:'right', gridcolor:'rgba(0,0,0,0)', tickfont:{size:11}};
+    document.getElementById('trend-title').textContent='Index plus ' + (ROUTES.find(r=>r.id===state.routeId)?.name || '');
   } else {
-    mode.textContent='Index trend';
-    document.getElementById('trend-sub').textContent=`${state.freq} • Base 100`;
+    document.getElementById('trend-title').textContent='Index trend';
   }
-  Plotly.newPlot('main-chart', data, layout2, {displayModeBar:false, responsive:true});
+  document.getElementById('trend-sub').textContent= state.freq + ' • Base 100';
+  Plotly.newPlot('main-chart', data, layout, {displayModeBar:false, responsive:true});
 }
-
 async function loadRoute(){
   const wrap=document.getElementById('route-table-wrap');
   const empty=document.getElementById('route-empty');
@@ -333,104 +271,85 @@ async function loadRoute(){
     state.routePoints = points;
     sub.textContent = `${j.route?.name || state.routeId} • ${j.label || 'T+'+state.window} • last ${points.length} points`;
     if(!points.length){
-      wrap.style.display='none'; empty.style.display='block';
-      empty.innerHTML=`No fare history for <b>${j.route?.name||state.routeId}</b> at <b>T+${state.window}</b> yet. The scraper runs daily — try another window or check tomorrow.`;
+      wrap.classList.add('hidden'); empty.classList.remove('hidden');
+      empty.innerHTML=`No fare history for <b>${j.route?.name||state.routeId}</b> at <b>T+${state.window}</b> yet. The scraper runs daily. Try another window.`;
     } else {
-      empty.style.display='none'; wrap.style.display='block';
-      const tb=document.getElementById('route-tbody');
-      tb.innerHTML = points.slice(-12).reverse().map(p=> `<tr><td>${fmtDate(p.date)}</td><td class="num">${fmtINR(p.median_fare)}</td><td class="num">${p.quote_count}</td></tr>`).join('');
+      empty.classList.add('hidden'); wrap.classList.remove('hidden');
+      document.getElementById('route-tbody').innerHTML = points.slice(-12).reverse().map(p=> `<tr><td class="py-2">${fmtDate(p.date)}</td><td class="py-2 text-right mono">${fmtINR(p.median_fare)}</td><td class="py-2 text-right mono">${p.quote_count}</td></tr>`).join('');
     }
-    renderMainChart();
-    loadElasticity();
-  }catch{
-    wrap.style.display='none'; empty.style.display='block'; empty.textContent='Failed to load route data.';
-  }
+    renderMainChart(); loadElasticity();
+  }catch{ empty.classList.remove('hidden'); wrap.classList.add('hidden'); }
 }
-
 async function loadHeatmap(){
   try{
     const res=await fetch('/api/heatmap'); const data=await res.json();
     const grid=document.getElementById('heatmap'); const empty=document.getElementById('heatmap-empty');
-    if(!Array.isArray(data) || !data.length){ grid.style.display='none'; empty.style.display='block'; return; }
-    empty.style.display='none'; grid.style.display='grid';
-    // group by route, keep latest
-    const byRoute={};
-    data.forEach(c=>{ const k=c.origin+'-'+c.destination; (byRoute[k]=byRoute[k]||[]).push(c); });
-    // flatten to cells sorted
+    if(!Array.isArray(data) || !data.length){ grid.classList.add('hidden'); empty.classList.remove('hidden'); return; }
+    empty.classList.add('hidden'); grid.classList.remove('hidden');
     const cells=data.slice().sort((a,b)=> (a.origin+a.destination).localeCompare(b.origin+b.destination) || a.advance_purchase_days-b.advance_purchase_days);
     const max=Math.max(...cells.map(c=>Number(c.median_total_fare)));
     const min=Math.min(...cells.map(c=>Number(c.median_total_fare)));
     grid.innerHTML = cells.map(c=>{
       const v=Number(c.median_total_fare);
       const t=(v-min)/Math.max(1,(max-min));
-      const bg=`rgba(255,90,31,${0.08 + t*0.55})`;
-      const border=`rgba(255,90,31,${0.15 + t*0.45})`;
-      return `<div class="heat-cell" style="background:${bg};border-color:${border}"><span>${c.origin}→${c.destination} · T+${c.advance_purchase_days}</span><b>${fmtINR(v)}</b></div>`;
+      const bg=`rgba(14,74,122,${0.07 + t*0.5})`;
+      return `<div class="rounded-xl border border-slate-200 p-3 text-center" style="background:${bg}"><div class="text-xs text-slate-600">${c.origin} to ${c.destination} • T+${c.advance_purchase_days}</div><div class="mono text-sm font-semibold mt-1">${fmtINR(v)}</div></div>`;
     }).join('');
   }catch{}
 }
-
 async function loadElasticity(){
   try{
     const res=await fetch(`/api/elasticity?route=${state.routeId}`);
     const data=await res.json();
-    document.getElementById('elasticity-sub').textContent = `${ROUTES.find(r=>r.id===state.routeId)?.name || state.routeId} • cheapest window highlighted`;
-    if(!Array.isArray(data) || !data.length){ Plotly.newPlot('elasticity-chart', [], {paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', margin:{l:40,r:10,t:10,b:28}, xaxis:{title:'Days before departure', gridcolor:'#f0ebe3'}, yaxis:{title:'Median fare', gridcolor:'#f0ebe3'}}); return; }
+    document.getElementById('elasticity-sub').textContent = (ROUTES.find(r=>r.id===state.routeId)?.name || state.routeId) + ' • cheapest window highlighted';
+    if(!Array.isArray(data) || !data.length){ Plotly.newPlot('elasticity-chart', [], {paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', margin:{l:40,r:10,t:10,b:28}}); return; }
     const x=data.map(d=>d.advance_purchase_days); const y=data.map(d=> Number(d.median_total_fare));
     const minIdx=y.indexOf(Math.min(...y));
-    const colors=y.map((_,i)=> i===minIdx ? '#1a7a4c' : '#ff5a1f');
-    Plotly.newPlot('elasticity-chart', [{x,y, type:'scatter', mode:'lines+markers', line:{color:'#ff5a1f', width:2}, marker:{color:colors, size:8, line:{color:'#fff',width:1}}}],
-      {margin:{l:48,r:12,t:10,b:28}, paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', xaxis:{gridcolor:'#f0ebe3', dtick:7, tickfont:{size:11}, title:{text:'Advance-purchase window (days)', font:{size:11}}}, yaxis:{gridcolor:'#f0ebe3', tickfont:{size:11}}, font:{family:'Inter'}}, {displayModeBar:false, responsive:true});
+    const colors=y.map((_,i)=> i===minIdx ? '#0e4a7a' : '#94a3b8');
+    Plotly.newPlot('elasticity-chart', [{x,y, type:'scatter', mode:'lines+markers', line:{color:'#0e4a7a', width:2}, marker:{color:colors, size:8, line:{color:'#fff',width:1}}}],
+      {margin:{l:48,r:12,t:10,b:28}, paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', xaxis:{gridcolor:'#f1f5f9', dtick:7, tickfont:{size:11}, title:{text:'Days before departure', font:{size:11}}}, yaxis:{gridcolor:'#f1f5f9', tickfont:{size:11}}, font:{family:'DM Sans'}}, {displayModeBar:false, responsive:true});
   }catch{}
 }
-
 async function loadBacktest(){
   try{
     const res=await fetch('/api/backtest'); const data=await res.json();
     const tb=document.getElementById('backtest-tbody');
-    if(!Array.isArray(data) || !data.length){ tb.innerHTML='<tr><td colspan="4" class="empty" style="border:0">No backtest rows yet — DGCA comparison will appear after a month of data.</td></tr>'; Plotly.newPlot('backtest-chart', [], {paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)'}); return; }
-    tb.innerHTML = data.map(r=> `<tr><td>${r.period}</td><td class="num">${Number(r.apix_value).toFixed(2)}</td><td class="num">${fmtINR(r.dgca_avg_fare)}</td><td class="num" style="color:${Math.abs(r.pct_deviation)>5 ? '#8a2a00' : '#0f5b2f'}">${Number(r.pct_deviation).toFixed(2)}%</td></tr>`).join('');
+    if(!Array.isArray(data) || !data.length){ tb.innerHTML='<tr><td colspan="4" class="py-6 text-center text-sm text-slate-500">No backtest rows yet. DGCA comparison appears after a month of data.</td></tr>'; return; }
+    tb.innerHTML = data.map(r=> `<tr><td class="py-2">${r.period}</td><td class="py-2 text-right mono">${Number(r.apix_value).toFixed(2)}</td><td class="py-2 text-right mono">${fmtINR(r.dgca_avg_fare)}</td><td class="py-2 text-right mono" style="color:${Math.abs(r.pct_deviation)>5 ? '#9a3412' : '#0e4a7a'}">${Number(r.pct_deviation).toFixed(2)}%</td></tr>`).join('');
     const x=data.map(d=>d.period); const y1=data.map(d=> Number(d.apix_value)); const y2=data.map(d=> Number(d.dgca_avg_fare));
-    // normalize DGCA to base 100 for visual comparison
     const base=y2[0]||1; const y2n=y2.map(v=> v/base*100);
     Plotly.newPlot('backtest-chart', [
-      {x, y:y1, name:'APIx (base 100)', type:'scatter', mode:'lines', line:{color:'#171412',width:2.2}},
-      {x, y:y2n, name:'DGCA (re-based to 100)', type:'scatter', mode:'lines', line:{color:'#ff5a1f', width:2, dash:'dash'}},
-    ], {margin:{l:48,r:12,t:10,b:28}, paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', xaxis:{gridcolor:'#f0ebe3', tickfont:{size:11}}, yaxis:{gridcolor:'#f0ebe3', title:{text:'Index', font:{size:11}}, tickfont:{size:11}}, legend:{orientation:'h', y:1.02, x:0, font:{size:11}}, font:{family:'Inter'}}, {displayModeBar:false, responsive:true});
+      {x, y:y1, name:'Faresight (base 100)', type:'scatter', mode:'lines', line:{color:'#0f172a',width:2.2}},
+      {x, y:y2n, name:'DGCA (re based to 100)', type:'scatter', mode:'lines', line:{color:'#0e4a7a', width:2, dash:'dash'}},
+    ], {margin:{l:48,r:12,t:10,b:28}, paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', xaxis:{gridcolor:'#f1f5f9', tickfont:{size:11}}, yaxis:{gridcolor:'#f1f5f9', title:{text:'Index', font:{size:11}}, tickfont:{size:11}}, legend:{orientation:'h', y:1.02, x:0, font:{size:11}}, font:{family:'DM Sans'}}, {displayModeBar:false, responsive:true});
   }catch{}
 }
-
 function downloadCSV(filename, rows, headers){
   const csv=[headers.join(','), ...rows.map(r=> headers.map(h=> `"${String(r[h]??'').replace(/"/g,'""')}"`).join(','))].join('\n');
   const blob=new Blob([csv],{type:'text/csv'}); const url=URL.createObjectURL(blob);
   const a=document.createElement('a'); a.href=url; a.download=filename; a.click(); URL.revokeObjectURL(url);
 }
-
-document.getElementById('btn-csv-main').onclick=()=>{
-  if(!state.indexData.length) return;
-  downloadCSV(`faresight-index-${state.freq}.csv`, state.indexData, ['index_date','frequency','index_value','base_period_ref','route_count','quote_count']);
-};
-document.getElementById('btn-csv-route').onclick=()=>{
-  if(!state.routePoints.length) return;
-  downloadCSV(`faresight-${state.routeId}-T${state.window}.csv`, state.routePoints, ['date','median_fare','quote_count']);
-};
+document.getElementById('btn-csv-main').onclick=()=>{ if(!state.indexData.length) return; downloadCSV(`faresight-index-${state.freq}.csv`, state.indexData, ['index_date','frequency','index_value','base_period_ref','route_count','quote_count']); };
+document.getElementById('btn-csv-route').onclick=()=>{ if(!state.routePoints.length) return; downloadCSV(`faresight-${state.routeId}-T${state.window}.csv`, state.routePoints, ['date','median_fare','quote_count']); };
 document.getElementById('btn-compare').onclick=async()=>{
   const a=state.routeId; const b=ROUTES.find(r=>r.id!==a)?.id || ROUTES[1]?.id;
   if(!b) return;
   const res=await fetch(`/api/comparison?routes=${a},${b}&window=${state.window}`);
   const j=await res.json();
-  if(!j.results?.length) return alert('Not enough data to compare yet — need two routes with history.');
-  const msg=j.results.map(r=> `${r.route}: avg ${fmtINR(r.avg_fare)} (min ${fmtINR(r.min_fare)} — max ${fmtINR(r.max_fare)})`).join('\n');
-  alert(`Comparison — ${j.label}\n\n${msg}`);
+  if(!j.results?.length) return alert('Not enough data to compare yet. Need two routes with history.');
+  const msg=j.results.map(r=> `${r.route}: avg ${fmtINR(r.avg_fare)} (min ${fmtINR(r.min_fare)} to max ${fmtINR(r.max_fare)})`).join('\n');
+  alert(`Comparison - ${j.label}\n\n${msg}`);
 };
-
-async function updateAll(){ await loadRoute(); await loadHeatmap(); }
+const io=new IntersectionObserver(ents=>{ ents.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('in') })},{threshold:0.15});
+document.querySelectorAll('.reveal').forEach(el=> io.observe(el));
+if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) document.querySelectorAll('.reveal').forEach(el=> el.classList.add('in'));
 
 renderChips();
 loadIndex();
-updateAll();
+loadRoute();
 loadBacktest();
 loadHeatmap();
+async function updateAll(){ await loadRoute(); await loadHeatmap(); }
 </script>
 </body>
 </html>
