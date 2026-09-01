@@ -35,21 +35,23 @@ async def get_index_series(
 ) -> list[IndexPoint]:
     """Returns the APIx time series at the requested frequency."""
     freq = frequency if frequency in ["daily", "weekly", "monthly"] else "daily"
-    query = text(
-        """
+    query_text = """
         select index_date, frequency, index_value, base_period_ref,
                route_count, quote_count
         from apix_index
         where frequency = :frequency
-          and (:start is null or index_date >= :start)
-          and (:end is null or index_date <= :end)
-        order by index_date asc
-        """
-    )
+    """
+    params = {"frequency": freq}
+    if start is not None:
+        query_text += " and index_date >= :start"
+        params["start"] = start
+    if end is not None:
+        query_text += " and index_date <= :end"
+        params["end"] = end
+    query_text += " order by index_date asc"
+    query = text(query_text)
     rows = (
-        await session.execute(
-            query, {"frequency": freq, "start": start, "end": end}
-        )
+        await session.execute(query, params)
     ).mappings().all()
     return [IndexPoint(**row) for row in rows]
 
