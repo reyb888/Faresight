@@ -35,14 +35,17 @@ app.add_middleware(
 )
 
 app.include_router(index_router)
+app.include_router(index_router, prefix="/api")
 
 
 @app.get("/healthz", tags=["meta"])
+@app.get("/api/healthz", tags=["meta"])
 async def health_check() -> dict:
     return {"status": "ok"}
 
 
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
+@app.get("/api", response_class=HTMLResponse, include_in_schema=False)
 async def root_portal() -> str:
     return """<!DOCTYPE html>
 <html lang="en">
