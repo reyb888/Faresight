@@ -15,8 +15,6 @@ from database import (
     delete_old_records,
     upsert_airfare_index,
     get_latest_index,
-    SYSTEM_LOGS,
-    PIPELINE_STATUS,
 )
 from config import (
     SERP_API_KEYS,

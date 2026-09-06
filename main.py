@@ -1,11 +1,12 @@
 from fastapi import FastAPI, HTTPException, Request, Depends, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, HTMLResponse, FileResponse
+from fastapi.responses import JSONResponse, HTMLResponse, FileResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from fastapi.templating import Jinja2Templates
 import asyncio
 import logging
+import os
 from datetime import date, datetime
 
 from config import (
@@ -103,6 +104,22 @@ class IndexRequest(BaseModel):
 @app.on_event("startup")
 async def startup():
     init_db()
+    # On ephemeral hosts (e.g. Vercel /tmp SQLite) the DB starts empty on
+    # every cold start — seed the 60-day baseline so the dashboard never
+    # renders blank. Non-fatal: any failure just logs and continues.
+    try:
+        from database import SessionLocal as _SessionLocal, get_record_count as _count
+        _db = _SessionLocal()
+        try:
+            _empty = _count(_db).get("total", 0) == 0
+        finally:
+            _db.close()
+        if _empty:
+            from seeder import seed_historical_data
+            _res = seed_historical_data(days_back=60)
+            logger.info("Baseline auto-seed: %s", _res.get("message", _res))
+    except Exception as e:
+        logger.warning("Baseline auto-seed skipped: %s", e)
     logger.info("Faresight API started — database initialized")
 
 
@@ -664,5 +681,6 @@ async def export_csv(db=Depends(get_db)):
 
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
-    from fastapi.responses import FileResponse
-    return FileResponse("dashboard/static/favicon.ico") if os.path.exists("dashboard/static/favicon.ico") else FileResponse("https://picsum.photos/seed/faresight/32/32")
+    if os.path.exists("dashboard/static/favicon.ico"):
+        return FileResponse("dashboard/static/favicon.ico")
+    return Response(status_code=204)

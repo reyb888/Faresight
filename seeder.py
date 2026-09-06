@@ -106,6 +106,7 @@ def seed_historical_data(
 
         records_created = 0
         routes_processed = 0
+        records: List[Dict[str, Any]] = []
 
         for route in routes:
             origin = route["origin_code"]
@@ -137,28 +138,12 @@ def seed_historical_data(
                         "data_source": "HISTORICAL_BASELINE",
                     }
 
-                    db_session.add(
-                        type(
-                            "AirfareRecordObj",
-                            (object,),
-                            {
-                                "route_id": record["route_id"],
-                                "capture_date": record["capture_date"],
-                                "flight_date": record["flight_date"],
-                                "lead_time_days": record["lead_time_days"],
-                                "airline_name": record["airline_name"],
-                                "price": record["price"],
-                                "currency": record["currency"],
-                                "data_source": record["data_source"],
-                            },
-                        )
-                    )
-                    records_created += 1
+                    records.append(record)
 
             routes_processed += 1
 
-        # Commit all records at once
-        db_session.commit()
+        # Bulk-insert via the ORM helper (resolves route_ids, commits)
+        records_created = insert_airfare_records(db_session, records)
 
         # Now compute and store the initial index
         from index_engine import compute_index

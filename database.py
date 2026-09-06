@@ -15,6 +15,8 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Index,
+    UniqueConstraint,
+    text,
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session, relationship
@@ -37,9 +39,16 @@ SQLITE_URL = f"sqlite:///{DB_PATH}"
 POSTGRES_URL = os.environ.get("DATABASE_URL", "")
 POSTGRES_SYNC_URL = os.environ.get("DATABASE_URL_SYNC", "")
 
-# Detect if we should use PostgreSQL or SQLite
-_USE_SUPABASE = False
-if POSTGRES_SYNC_URL and POSTGRES_SYNC_URL.startswith("postgresql"):
+# Detect if we should use PostgreSQL or SQLite.
+# On Vercel serverless the filesystem is read-only except /tmp and there is
+# no persistent disk, so always use an ephemeral SQLite DB there and ignore
+# any stale DATABASE_URL env vars.
+if os.environ.get("VERCEL") == "1":
+    DB_PATH = "/tmp/airfare.db"
+    SQLITE_URL = f"sqlite:///{DB_PATH}"
+    _USE_SUPABASE = False
+    _engine = create_engine(SQLITE_URL, echo=False, connect_args={"check_same_thread": False})
+elif POSTGRES_SYNC_URL and POSTGRES_SYNC_URL.startswith("postgresql"):
     _USE_SUPABASE = True
     _engine = create_engine(POSTGRES_SYNC_URL, echo=False, future=True)
 elif POSTGRES_URL and POSTGRES_URL.startswith("postgresql"):
@@ -50,6 +59,9 @@ else:
     _engine = create_engine(SQLITE_URL, echo=False, connect_args={"check_same_thread": False})
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=_engine)
+
+# Lead-time buckets (days in advance) shared by seeder / fetcher / API.
+LEAD_TIMES = [1, 3, 5, 7, 15, 30, 45]
 
 
 # ---------------------------------------------------------------------------
@@ -62,7 +74,7 @@ class Routes(Base):
     id = Column(Integer, primary_key=True, index=True)
     origin_code = Column(String(10), nullable=False, index=True)
     destination_code = Column(String(10), nullable=False, index=True)
-    route_name = Column(String(100), nullable=False, unique=True together_with="origin_code")
+    route_name = Column(String(100), nullable=False)
 
     __table_args__ = (UniqueConstraint("origin_code", "destination_code", name="uq_route_code"),)
 
