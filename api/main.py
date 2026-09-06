@@ -1,15 +1,22 @@
-"""
-Faresight API entrypoint.
-Run locally with: uvicorn api.main:app --reload
-"""
-
 import os
+import sys
+from pathlib import Path
+
+root_dir = Path(__file__).resolve().parent.parent
+api_dir = Path(__file__).resolve().parent
+for p in (str(root_dir), str(api_dir)):
+    if p not in sys.path:
+        sys.path.insert(0, p)
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 
-from api.routers.index import router as index_router
+try:
+    from api.routers.index import router as index_router
+except ImportError:
+    from routers.index import router as index_router
+
 
 app = FastAPI(
     title="Faresight - Real-time Airfare Price Index for India",

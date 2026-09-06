@@ -1,4 +1,14 @@
 import os
+import sys
+from pathlib import Path
+
+# Ensure paths
+root_dir = Path(__file__).resolve().parent.parent
+api_dir = Path(__file__).resolve().parent
+for p in (str(root_dir), str(api_dir)):
+    if p not in sys.path:
+        sys.path.insert(0, p)
+
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -22,6 +32,7 @@ def get_engine():
             raw_url,
             echo=False,
             pool_pre_ping=True,
+            connect_args={"statement_cache_size": 0},
         )
         _AsyncSessionLocal = sessionmaker(_engine, class_=AsyncSession, expire_on_commit=False)
     return _engine, _AsyncSessionLocal

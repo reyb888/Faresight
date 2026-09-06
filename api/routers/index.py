@@ -1,27 +1,43 @@
-"""
-/v1/index, /v1/routes, /v1/heatmap, /v1/elasticity, /v1/backtest
+import sys
+from pathlib import Path
 
-Read-only endpoints over the tables defined in db/migrations/001_init.sql.
-The dashboard and any external consumer (NSO/RBI) hit these same endpoints —
-see docs/SYSTEM_ARCHITECTURE.md §2.5 for why there's no direct-DB shortcut.
-"""
+root_dir = Path(__file__).resolve().parent.parent.parent
+api_dir = Path(__file__).resolve().parent.parent
+for p in (str(root_dir), str(api_dir)):
+    if p not in sys.path:
+        sys.path.insert(0, p)
+
 from datetime import date
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api.auth import require_api_key, get_api_key
-from api.db import get_session
-from api.models import (
-    BacktestRow,
-    ElasticityPoint,
-    Frequency,
-    HeatmapCell,
-    IndexPoint,
-    RouteSeries,
-    RouteSeriesPoint,
-)
+try:
+    from api.auth import require_api_key, get_api_key
+    from api.db import get_session
+    from api.models import (
+        BacktestRow,
+        ElasticityPoint,
+        Frequency,
+        HeatmapCell,
+        IndexPoint,
+        RouteSeries,
+        RouteSeriesPoint,
+    )
+except ImportError:
+    from auth import require_api_key, get_api_key
+    from db import get_session
+    from models import (
+        BacktestRow,
+        ElasticityPoint,
+        Frequency,
+        HeatmapCell,
+        IndexPoint,
+        RouteSeries,
+        RouteSeriesPoint,
+    )
+
 
 router = APIRouter(prefix="/v1", tags=["index"])
 
