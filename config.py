@@ -9,11 +9,6 @@ load_dotenv()
 SERP_API_KEYS_ENV = os.environ.get("SERP_API_KEYS", "")
 SERP_API_KEYS = [k.strip() for k in SERP_API_KEYS_ENV.split(",") if k.strip()]
 
-if not SERP_API_KEYS:
-    raise ValueError(
-        "SERP_API_KEYS environment variable not set. "
-        "Please provide comma-separated API keys: SERP_API_KEYS=key1,key2,key3"
-    )
 
 # Active pointer for round-robin rotation
 SERP_API_KEY_POINTER = 0
@@ -74,3 +69,4 @@ ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "sih2026admin")
 # ============================================================
 DEFAULT_DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "airfare.db")
 DB_PATH = os.environ.get("AIRFARE_DB_PATH", DEFAULT_DB_PATH)
+INIT_DB = os.environ.get("INIT_DB", "true").lower() == "true"

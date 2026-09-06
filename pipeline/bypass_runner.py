@@ -7,7 +7,12 @@ import os, re, json, random
 from datetime import date, datetime, timedelta, timezone
 import psycopg2
 from psycopg2.extras import execute_values
-from curl_cffi import requests
+try:
+    from curl_cffi import requests as requests_client
+    _HAS_CURL_CFFI = True
+except ImportError:
+    import requests as requests_client
+    _HAS_CURL_CFFI = False
 
 DATABASE_URL_SYNC = os.environ.get("DATABASE_URL_SYNC", "").strip() or "postgresql://postgres.ladhxsgrucuunsdorfdf:Reyansh%40008@aws-0-ap-northeast-1.pooler.supabase.com:5432/postgres"
 APIX_BASE_PERIOD = os.environ.get("APIX_BASE_PERIOD", "2026-01-06")
@@ -19,27 +24,31 @@ MULTS = {1:1.65,7:1.25,15:1.00,30:0.85,45:0.78}
 
 def fetch_live_fare(origin, dest):
     """TLS bypass + auto-selector attempt. Returns fare or None."""
-    # Try Cleartrip search API pattern with bypass - this is the auto-discovered live source
-    # If API needs auth, we auto-extract from SEO/search page instead (selector discovery)
     try:
-        # Cleartrip homepage works with bypass (404KB), try its flight search XHR
-        r = requests.get(f"https://www.cleartrip.com/flights/search?origin={origin}&destination={dest}", impersonate="chrome120", timeout=12,
-                         headers={"Referer":"https://www.cleartrip.com/","Accept":"application/json"})
+        if _HAS_CURL_CFFI:
+            r = requests_client.get(f"https://www.cleartrip.com/flights/search?origin={origin}&destination={dest}", impersonate="chrome120", timeout=12,
+                             headers={"Referer":"https://www.cleartrip.com/","Accept":"application/json"})
+        else:
+            r = requests_client.get(f"https://www.cleartrip.com/flights/search?origin={origin}&destination={dest}", timeout=12,
+                             headers={"Referer":"https://www.cleartrip.com/","Accept":"application/json","User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
         if r.status_code==200 and "fare" in r.text.lower():
             m = re.search(r'"(?:fare|price|amount)"\s*:\s*(\d{3,5})', r.text)
             if m: return float(m.group(1))
-    except: pass
+    except Exception:
+        pass
     try:
-        # IndiGo SEO page with bypass - auto-selector for any price
-        r = requests.get(f"https://www.goindigo.in/in/en/flights/flights-from-{origin.lower()}-to-{dest.lower()}.html", impersonate="chrome120", timeout=12)
+        if _HAS_CURL_CFFI:
+            r = requests_client.get(f"https://www.goindigo.in/in/en/flights/flights-from-{origin.lower()}-to-{dest.lower()}.html", impersonate="chrome120", timeout=12)
+        else:
+            r = requests_client.get(f"https://www.goindigo.in/in/en/flights/flights-from-{origin.lower()}-to-{dest.lower()}.html", timeout=12,
+                             headers={"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
         if r.status_code==200 and len(r.text)>50000:
-            # Auto-selector: find any 4-digit number that looks like fare in JSON-LD or text
-            # No hard-coded selector - discovered dynamically
             nums = re.findall(r'"price"\s*:\s*"?(\d{4,5})"?', r.text)
             if nums:
                 vals=[int(n) for n in nums if 2000<int(n)<25000]
                 if vals: return float(random.choice(vals))
-    except: pass
+    except Exception:
+        pass
     return None
 
 def run_bypass_batch(target_date: date = None) -> dict:

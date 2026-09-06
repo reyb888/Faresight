@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Request, Depends, BackgroundAPICDepends
+from fastapi import FastAPI, HTTPException, Request, Depends, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -212,7 +212,7 @@ async def api_public_indices(
 @app.post("/admin/trigger-live-fetch")
 async def admin_trigger_live_fetch(
     request: Request,
-    route: str = Depends(lambda: "DEL-BOM"),  # Will fix below
+    route: str = "DEL-BOM",
     db=Depends(get_db),
 ):
     """Trigger live SerpApi fetch (Admin protected)."""
