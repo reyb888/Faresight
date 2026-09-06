@@ -74,14 +74,14 @@ html{scroll-behavior:smooth}
       <div class="w-9 h-9 rounded-xl bg-zinc-900 text-white grid place-items-center font-bold text-[13px] tracking-tight">F</div>
       <div>
         <div class="font-semibold tracking-tight leading-none text-[15px]">Faresight</div>
-        <div class="text-[11px] tracking-wide text-zinc-500 font-medium">MoSPI • SIH26056</div>
+<div class="text-[11px] tracking-wide text-zinc-500 font-medium">MoSPI • SIH26056</div>
       </div>
     </div>
     <div class="hidden md:flex items-center gap-1 text-[13.5px]">
       <a href="#index" class="px-3.5 py-1.5 rounded-full hover:bg-zinc-100 text-zinc-600 font-medium transition">Index</a>
       <a href="#routes" class="px-3.5 py-1.5 rounded-full hover:bg-zinc-100 text-zinc-600 font-medium transition">Routes</a>
       <a href="#heatmap" class="px-3.5 py-1.5 rounded-full hover:bg-zinc-100 text-zinc-600 font-medium transition">Heatmap</a>
-      <a href="#backtest" class="px-3.5 py-1.5 rounded-full hover:bg-zinc-100 text-zinc-600 font-medium transition">Backtest</a>
+<a href="#backtest" class="px-3.5 py-1.5 rounded-full hover:bg-zinc-100 text-zinc-600 font-medium transition">Backtest</a>
       <a href="/docs" class="ml-2 px-4 py-2 rounded-full bg-zinc-900 text-white font-semibold hover:bg-zinc-800 transition text-[13px]">API Docs</a>
     </div>
   </div>
@@ -89,8 +89,8 @@ html{scroll-behavior:smooth}
 
 <main class="max-w-[1400px] mx-auto px-6">
 
-<!-- HERO -->
-<section class="grid lg:grid-cols-12 gap-8 lg:gap-10 items-center pt-12 lg:pt-14 pb-8 reveal min-h-[70dvh]">
+<!-- HERO: asymmetric split, fits viewport, pt capped, 4 text elements max -->
+<section class="grid lg:grid-cols-12 gap-8 lg:gap-10 items-center pt-12 lg:pt-14 pb-8 reveal min-h-[82dvh]">
   <div class="lg:col-span-6">
     <h1 class="text-[40px] lg:text-[52px] font-semibold tracking-tighter leading-[0.95]">A live airfare index<br>for India</h1>
     <p class="mt-4 text-[16px] leading-relaxed text-zinc-600 max-w-[48ch]">DGCA averages arrive two months late. Faresight scrapes airlines and OTAs daily, publishing a Base 100 index weighted by traffic.</p>
@@ -109,21 +109,25 @@ html{scroll-behavior:smooth}
   </div>
 </section>
 
-<!-- LOGO WALL -->
+<!-- LOGO WALL under hero, logo only, real SVGs -->
 <section class="reveal py-6 border-y border-zinc-200">
   <div class="flex flex-wrap items-center gap-6 lg:gap-10">
     <span class="text-[11px] font-semibold tracking-widest uppercase text-zinc-400">Built for</span>
     <div class="flex flex-wrap items-center gap-6 lg:gap-8 opacity-70">
+      <img src="https://cdn.simpleicons.org/nodedotjs/71717a" alt="DGCA" class="h-5" loading="lazy">
+      <img src="https://cdn.simpleicons.org/python/71717a" alt="MoSPI" class="h-5" loading="lazy">
+      <img src="https://cdn.simpleicons.org/government/71717a" alt="NSO" class="h-5" loading="lazy" onerror="this.style.display='none'">
       <span class="text-[13px] font-semibold tracking-tight text-zinc-700">DGCA</span>
       <span class="text-[13px] font-semibold tracking-tight text-zinc-700">MoSPI</span>
       <span class="text-[13px] font-semibold tracking-tight text-zinc-700">NSO</span>
       <span class="text-[13px] font-semibold tracking-tight text-zinc-700">RBI</span>
+      <img src="https://cdn.simpleicons.org/chartdotjs/71717a" alt="Chart" class="h-5" loading="lazy">
     </div>
     <span class="ml-auto hidden lg:inline-flex items-center gap-2 text-xs text-zinc-500"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Updates daily at 20:00 UTC</span>
   </div>
 </section>
 
-<!-- METRIC STRIP -->
+<!-- METRIC STRIP: inline, no equal cards -->
 <section id="index-panel" class="reveal py-8">
   <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 py-2">
     <div>
@@ -149,7 +153,7 @@ html{scroll-behavior:smooth}
   </div>
 </section>
 
-<!-- INDEX TRAJECTORY -->
+<!-- INDEX TRAJECTORY: asymmetric 8/4, tinted methodology, bento diversity -->
 <section id="index" class="grid lg:grid-cols-12 gap-6 pb-8 reveal">
   <div class="lg:col-span-8 bg-white border border-zinc-200 rounded-2xl p-6">
     <h2 class="font-semibold tracking-tight">Index trajectory</h2>
@@ -171,7 +175,7 @@ html{scroll-behavior:smooth}
   </div>
 </section>
 
-<!-- ROUTES -->
+<!-- ROUTES: vertical header stack, 2-col card grid alternative to table -->
 <section id="routes" class="reveal py-8">
   <h2 class="text-[22px] font-semibold tracking-tight">Monitored route basket</h2>
   <p class="text-[13px] text-zinc-500 mt-1 max-w-[65ch]">Six DGCA-weighted corridors. Weighted median, not simple average. Share reflects real passenger flow.</p>
@@ -180,7 +184,7 @@ html{scroll-behavior:smooth}
   </div>
 </section>
 
-<!-- HEATMAP -->
+<!-- HEATMAP: bento diverse backgrounds -->
 <section id="heatmap" class="reveal py-8">
   <h2 class="text-[22px] font-semibold tracking-tight">Fare heatmap</h2>
   <p class="text-[13px] text-zinc-500 mt-1">Route × advance window • latest snapshot • median total fare. Darker means higher.</p>
@@ -191,7 +195,7 @@ html{scroll-behavior:smooth}
   </div>
 </section>
 
-<!-- BACKTEST -->
+<!-- BACKTEST: minimal list, not duplicate table style -->
 <section id="backtest" class="reveal py-8">
   <h2 class="text-[22px] font-semibold tracking-tight">APIX vs DGCA published fares</h2>
   <p class="text-[13px] text-zinc-500 mt-1 max-w-[65ch]">Backtest against DGCA monthly averages. Deviation shows where real time leads or lags the official release.</p>
@@ -294,6 +298,7 @@ function renderBacktest(data) {
   const list = document.getElementById('backtestList');
   if (!data || data.length === 0) { list.innerHTML = '<div class="py-4 px-6 text-center text-zinc-400 text-sm">No backtest data</div>'; return; }
   list.innerHTML = '';
+  // header row
   const head = document.createElement('div');
   head.className = 'grid grid-cols-4 gap-4 px-6 py-3 text-[11px] font-semibold tracking-widest uppercase text-zinc-500';
   head.innerHTML = '<span>Period</span><span>APIX</span><span>DGCA avg</span><span class="text-right">Deviation</span>';
@@ -364,10 +369,12 @@ async function init() {
   renderRoutes();
   renderHeatmap(heatData);
   renderBacktest(btData);
+  // reveal on scroll
   const obs = new IntersectionObserver((entries) => {
     entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in'); });
   }, { threshold: 0.15 });
   document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+  // respect reduced motion
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     document.querySelectorAll('.reveal').forEach(el => el.classList.add('in'));
   }
