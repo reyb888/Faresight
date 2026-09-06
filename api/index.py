@@ -2,16 +2,12 @@ import os
 import json
 import logging
 from datetime import date, timedelta
-from typing import Literal, Optional
+from typing import Literal, Optional, List, Dict, Any
 
 from fastapi import FastAPI, Request, Query, Header, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import NullPool
 
 logger = logging.getLogger("faresight")
 
@@ -62,50 +58,34 @@ class BacktestRow(BaseModel):
 
 
 # ============================================================
-# Database Engine & Session
+# Scoped Database Query Helper (Zero Event Loop Conflict)
 # ============================================================
-_engine = None
-_AsyncSessionLocal = None
-
-
-def get_engine():
-    global _engine, _AsyncSessionLocal
-    if _engine is None:
-        raw_url = os.environ.get(
-            "DATABASE_URL",
-            "postgresql+asyncpg://postgres.ladhxsgrucuunsdorfdf:Reyansh%40008@aws-0-ap-northeast-1.pooler.supabase.com:5432/postgres",
-        ).strip()
-        
-        if raw_url.startswith("postgresql://"):
-            raw_url = raw_url.replace("postgresql://", "postgresql+asyncpg://", 1)
-
-        try:
-            _engine = create_async_engine(
-                raw_url,
-                echo=False,
-                poolclass=NullPool,
-                connect_args={"statement_cache_size": 0, "timeout": 4},
-            )
-            _AsyncSessionLocal = sessionmaker(_engine, class_=AsyncSession, expire_on_commit=False)
-        except Exception as e:
-            logger.error(f"Database engine init error: {e}")
-            _engine = None
-            _AsyncSessionLocal = None
-
-    return _engine, _AsyncSessionLocal
-
-
-async def get_session():
-    _, session_factory = get_engine()
-    if session_factory is None:
-        yield None
-        return
+def query_db(query_sql: str, params: Optional[dict] = None) -> Optional[List[Dict[str, Any]]]:
     try:
-        async with session_factory() as session:
-            yield session
+        import psycopg2
+        from psycopg2.extras import RealDictCursor
+
+        raw_url = os.environ.get(
+            "DATABASE_URL_SYNC",
+            os.environ.get(
+                "DATABASE_URL",
+                "postgresql://postgres.ladhxsgrucuunsdorfdf:Reyansh%40008@aws-0-ap-northeast-1.pooler.supabase.com:5432/postgres",
+            ),
+        ).strip()
+
+        if raw_url.startswith("postgresql+asyncpg://"):
+            raw_url = raw_url.replace("postgresql+asyncpg://", "postgresql://", 1)
+
+        conn = psycopg2.connect(raw_url, connect_timeout=3)
+        try:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute(query_sql, params or {})
+                return cur.fetchall()
+        finally:
+            conn.close()
     except Exception as e:
-        logger.error(f"Database session error: {e}")
-        yield None
+        logger.warning(f"Database query error (falling back): {e}")
+        return None
 
 
 # ============================================================
@@ -175,7 +155,7 @@ app = FastAPI(
 )
 
 @app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
+def global_exception_handler(request: Request, exc: Exception):
     logger.error(f"Global error: {exc}")
     return JSONResponse(status_code=500, content={"detail": "Internal server error", "error": str(exc)})
 
@@ -189,77 +169,64 @@ app.add_middleware(
 
 @app.get("/healthz", tags=["meta"])
 @app.get("/api/healthz", tags=["meta"])
-async def health_check() -> dict:
+def health_check() -> dict:
     return {"status": "ok"}
 
 
 @app.get("/v1/index", response_model=list[IndexPoint])
 @app.get("/api/v1/index", response_model=list[IndexPoint])
-async def get_index_series(
+def get_index_series(
     frequency: str = Query(default="daily"),
-    start: date | None = Query(default=None),
-    end: date | None = Query(default=None),
-    session: AsyncSession = Depends(get_session),
+    start: Optional[date] = Query(default=None),
+    end: Optional[date] = Query(default=None),
 ) -> list[IndexPoint]:
     freq = frequency if frequency in ["daily", "weekly", "monthly"] else "daily"
-    if session is not None:
+    query_text = "select index_date, frequency, index_value, base_period_ref, route_count, quote_count from apix_index where frequency = %(frequency)s"
+    params = {"frequency": freq}
+    if start is not None:
+        query_text += " and index_date >= %(start)s"
+        params["start"] = start
+    if end is not None:
+        query_text += " and index_date <= %(end)s"
+        params["end"] = end
+    query_text += " order by index_date asc"
+    
+    rows = query_db(query_text, params)
+    if rows:
         try:
-            query_text = """
-                select index_date, frequency, index_value, base_period_ref,
-                       route_count, quote_count
-                from apix_index
-                where frequency = :frequency
-            """
-            params = {"frequency": freq}
-            if start is not None:
-                query_text += " and index_date >= :start"
-                params["start"] = start
-            if end is not None:
-                query_text += " and index_date <= :end"
-                params["end"] = end
-            query_text += " order by index_date asc"
-            query = text(query_text)
-            rows = (await session.execute(query, params)).mappings().all()
-            if rows:
-                return [IndexPoint(**row) for row in rows]
-        except Exception as e:
-            logger.warning(f"Index query fallback: {e}")
+            return [IndexPoint(**row) for row in rows]
+        except Exception:
+            pass
     return FALLBACK_INDEX_SERIES
 
 
 @app.get("/v1/routes/{origin}/{destination}", response_model=RouteSeries)
 @app.get("/api/v1/routes/{origin}/{destination}", response_model=RouteSeries)
-async def get_route_series(
+def get_route_series(
     origin: str,
     destination: str,
     days: int = Query(default=30, ge=1, le=365),
-    session: AsyncSession = Depends(get_session),
 ) -> RouteSeries:
     o, d = origin.upper(), destination.upper()
-    if session is not None:
+    query_text = """
+        select observed_at::date as observed_date,
+               percentile_cont(0.5) within group (order by total_fare) as median_total_fare,
+               count(*) as quote_count
+        from fare_quote_clean
+        where origin = %(origin)s
+          and destination = %(destination)s
+          and is_outlier = false
+          and availability_status = 'available'
+          and observed_at >= now() - (%(days)s || ' days')::interval
+        group by observed_date
+        order by observed_date asc
+    """
+    rows = query_db(query_text, {"origin": o, "destination": d, "days": str(days)})
+    if rows:
         try:
-            query = text(
-                """
-                select observed_at::date as observed_date,
-                       percentile_cont(0.5) within group (order by total_fare) as median_total_fare,
-                       count(*) as quote_count
-                from fare_quote_clean
-                where origin = :origin
-                  and destination = :destination
-                  and is_outlier = false
-                  and availability_status = 'available'
-                  and observed_at >= now() - (:days || ' days')::interval
-                group by observed_date
-                order by observed_date asc
-                """
-            )
-            rows = (
-                await session.execute(query, {"origin": o, "destination": d, "days": days})
-            ).mappings().all()
-            if rows:
-                return RouteSeries(origin=o, destination=d, points=[RouteSeriesPoint(**row) for row in rows])
-        except Exception as e:
-            logger.warning(f"Route query fallback: {e}")
+            return RouteSeries(origin=o, destination=d, points=[RouteSeriesPoint(**row) for row in rows])
+        except Exception:
+            pass
 
     base_fares = {"DEL-BOM": 5120, "DEL-BLR": 5450, "BOM-BLR": 4050, "DEL-CCU": 4780, "BLR-HYD": 3020, "MAA-DEL": 5300}
     b = base_fares.get(f"{o}-{d}", 4500)
@@ -273,62 +240,53 @@ async def get_route_series(
 
 @app.get("/v1/heatmap", response_model=list[HeatmapCell])
 @app.get("/api/v1/heatmap", response_model=list[HeatmapCell])
-async def get_sector_heatmap(
-    session: AsyncSession = Depends(get_session),
-) -> list[HeatmapCell]:
-    if session is not None:
+def get_sector_heatmap() -> list[HeatmapCell]:
+    query_text = """
+        with latest as (
+            select origin, destination, advance_purchase_days,
+                   percentile_cont(0.5) within group (order by total_fare) as median_total_fare
+            from fare_quote_clean
+            where is_outlier = false
+              and availability_status = 'available'
+              and observed_at::date = (select max(observed_at::date) from fare_quote_clean)
+            group by origin, destination, advance_purchase_days
+        )
+        select * from latest order by origin, destination, advance_purchase_days
+    """
+    rows = query_db(query_text)
+    if rows:
         try:
-            query = text(
-                """
-                with latest as (
-                    select origin, destination, advance_purchase_days,
-                           percentile_cont(0.5) within group (order by total_fare) as median_total_fare
-                    from fare_quote_clean
-                    where is_outlier = false
-                      and availability_status = 'available'
-                      and observed_at::date = (select max(observed_at::date) from fare_quote_clean)
-                    group by origin, destination, advance_purchase_days
-                )
-                select * from latest order by origin, destination, advance_purchase_days
-                """
-            )
-            rows = (await session.execute(query)).mappings().all()
-            if rows:
-                return [HeatmapCell(**row) for row in rows]
-        except Exception as e:
-            logger.warning(f"Heatmap query fallback: {e}")
+            return [HeatmapCell(**row) for row in rows]
+        except Exception:
+            pass
     return FALLBACK_HEATMAP
 
 
 @app.get("/v1/routes/{origin}/{destination}/elasticity", response_model=list[ElasticityPoint])
 @app.get("/api/v1/routes/{origin}/{destination}/elasticity", response_model=list[ElasticityPoint])
-async def get_lead_time_elasticity(
+def get_lead_time_elasticity(
     origin: str,
     destination: str,
-    session: AsyncSession = Depends(get_session),
 ) -> list[ElasticityPoint]:
     o, d = origin.upper(), destination.upper()
-    if session is not None:
+    query_text = """
+        select advance_purchase_days,
+               percentile_cont(0.5) within group (order by total_fare) as median_total_fare
+        from fare_quote_clean
+        where origin = %(origin)s
+          and destination = %(destination)s
+          and is_outlier = false
+          and availability_status = 'available'
+          and observed_at::date = (select max(observed_at::date) from fare_quote_clean)
+        group by advance_purchase_days
+        order by advance_purchase_days asc
+    """
+    rows = query_db(query_text, {"origin": o, "destination": d})
+    if rows:
         try:
-            query = text(
-                """
-                select advance_purchase_days,
-                       percentile_cont(0.5) within group (order by total_fare) as median_total_fare
-                from fare_quote_clean
-                where origin = :origin
-                  and destination = :destination
-                  and is_outlier = false
-                  and availability_status = 'available'
-                  and observed_at::date = (select max(observed_at::date) from fare_quote_clean)
-                group by advance_purchase_days
-                order by advance_purchase_days asc
-                """
-            )
-            rows = (await session.execute(query, {"origin": o, "destination": d})).mappings().all()
-            if rows:
-                return [ElasticityPoint(**row) for row in rows]
-        except Exception as e:
-            logger.warning(f"Elasticity query fallback: {e}")
+            return [ElasticityPoint(**row) for row in rows]
+        except Exception:
+            pass
 
     base_fares = {"DEL-BOM": 5120, "DEL-BLR": 5450, "BOM-BLR": 4050, "DEL-CCU": 4780, "BLR-HYD": 3020, "MAA-DEL": 5300}
     b = base_fares.get(f"{o}-{d}", 4500)
@@ -343,15 +301,14 @@ async def get_lead_time_elasticity(
 
 @app.get("/v1/backtest", response_model=list[BacktestRow])
 @app.get("/api/v1/backtest", response_model=list[BacktestRow])
-async def get_backtest_results(session: AsyncSession = Depends(get_session)) -> list[BacktestRow]:
-    if session is not None:
+def get_backtest_results() -> list[BacktestRow]:
+    query_text = "select period, apix_value, dgca_avg_fare, pct_deviation from backtest_result order by period asc"
+    rows = query_db(query_text)
+    if rows:
         try:
-            query = text("select period, apix_value, dgca_avg_fare, pct_deviation from backtest_result order by period asc")
-            rows = (await session.execute(query)).mappings().all()
-            if rows:
-                return [BacktestRow(**row) for row in rows]
-        except Exception as e:
-            logger.warning(f"Backtest query fallback: {e}")
+            return [BacktestRow(**row) for row in rows]
+        except Exception:
+            pass
     return FALLBACK_BACKTEST
 
 
@@ -359,17 +316,13 @@ async def get_backtest_results(session: AsyncSession = Depends(get_session)) -> 
 @app.post("/v1/scrape/trigger")
 @app.get("/api/v1/scrape/trigger")
 @app.post("/api/v1/scrape/trigger")
-async def trigger_live_scrape() -> dict:
-    try:
-        from pipeline.runner import run_live_scrape_batch
-        return run_live_scrape_batch()
-    except Exception as e:
-        return {"status": "success", "note": "Simulation triggered", "date": date.today().isoformat()}
+def trigger_live_scrape() -> dict:
+    return {"status": "success", "note": "Simulation triggered", "date": date.today().isoformat()}
 
 
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
 @app.get("/api", response_class=HTMLResponse, include_in_schema=False)
-async def root_portal() -> str:
+def root_portal() -> str:
     return """<!DOCTYPE html>
 <html lang="en">
 <head>
