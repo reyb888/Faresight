@@ -15,7 +15,21 @@ services:
         value: 3.11.9
       - key: DATABASE_URL
         sync: false
+      - key: DATABASE_URL_SYNC
+        sync: false
       - key: API_KEYS
         sync: false
       - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: SERPAPI_KEY
+        sync: false
+      - key: APIX_BASE_PERIOD
+        sync: false
+      - key: SCRAPE_USER_AGENT
+        sync: false
+      - key: SCRAPE_MIN_DELAY_SECONDS
+        sync: false
+      - key: SCRAPE_ROBOTSTXT_OBEY
+        sync: false
+      - key: RENDER_CRON_SCHEDULE
         sync: false
