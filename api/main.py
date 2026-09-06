@@ -8,9 +8,9 @@ for p in (str(root_dir), str(api_dir)):
     if p not in sys.path:
         sys.path.insert(0, p)
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 
 try:
     from api.routers.index import router as index_router
@@ -28,6 +28,13 @@ app = FastAPI(
     version="1.0.0",
 )
 
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error", "error": str(exc)},
+    )
+
 _allowed_origins = [
     origin.strip()
     for origin in os.environ.get("CORS_ALLOWED_ORIGINS", "").split(",")
@@ -37,12 +44,14 @@ _allowed_origins = [
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_allowed_origins or ["*"],
-    allow_methods=["GET"],
-    allow_headers=["x-api-key"],
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["*"],
 )
 
 app.include_router(index_router)
 app.include_router(index_router, prefix="/api")
+handler = app
+
 
 
 @app.get("/healthz", tags=["meta"])

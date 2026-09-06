@@ -15,4 +15,6 @@ try:
 except ImportError:
     from main import app
 
-__all__ = ["app"]
+handler = app
+__all__ = ["app", "handler"]
+
