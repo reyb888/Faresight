@@ -10,23 +10,6 @@
     {
       "src": "/api/(.*)",
       "dest": "main.py"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
     }
-  ],
-  "environment": {
-    "SERP_API_KEYS": process.env.SERP_API_KEYS,
-    "AIRFARE_DB_PATH": process.env.AIRFARE_DB_PATH,
-    "ADMIN_USERNAME": process.env.ADMIN_USERNAME,
-    "ADMIN_PASSWORD": process.env.ADMIN_PASSWORD,
-    "HOST": process.env.HOST,
-    "PORT": process.env.PORT,
-    "DEBUG": process.env.DEBUG,
-    "SERPAPI_TIMEOUT": process.env.SERPAPI_TIMEOUT,
-    "SERPAPI_MAX_RETRIES": process.env.SERPAPI_MAX_RETRIES,
-    "SERPAPI_FALLBACK_TO_CACHE": process.env.SERPAPI_FALLBACK_TO_CACHE,
-    "CORS_ALLOWED_ORIGINS": process.env.CORS_ALLOWED_ORIGINS
-  }
+  ]
 }
