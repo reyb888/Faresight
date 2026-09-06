@@ -10,7 +10,6 @@ from sqlalchemy import (
     Column,
     Integer,
     String,
-    Real,
     Text,
     DateTime,
     ForeignKey,
@@ -88,7 +87,7 @@ class AirfareRecords(Base):
     flight_date = Column(Text, nullable=False)
     lead_time_days = Column(Integer, nullable=False)
     airline_name = Column(String(100))
-    price = Column(Real)
+    price = Column(Text)
     currency = Column(String(3), default="INR", nullable=False)
     data_source = Column(String(20), nullable=False, default="HISTORICAL_BASELINE")
     fetched_at = Column(DateTime, default=datetime.utcnow)
