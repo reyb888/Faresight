@@ -101,10 +101,10 @@ class AirfareIndices(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     calculated_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    short_term_index = Column(Real, nullable=True)
-    medium_term_index = Column(Real, nullable=True)
-    long_term_index = Column(Real, nullable=True)
-    composite_index = Column(Real, nullable=True)
+    short_term_index = Column(Text, nullable=True)
+    medium_term_index = Column(Text, nullable=True)
+    long_term_index = Column(Text, nullable=True)
+    composite_index = Column(Text, nullable=True)
 
     __table_args__ = (Index("ix_airfare_indices_calculated_at", "calculated_at"),)
 
