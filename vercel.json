@@ -11,15 +11,5 @@
       "src": "/api/(.*)",
       "dest": "main.py"
     }
-  ],
-  "environment": {
-    "PYTHON_VERSION": "3.11.9",
-    "SERP_API_KEYS": process.env.SERP_API_KEYS,
-    "AIRFARE_DB_PATH": "./airfare.db",
-    "ADMIN_USERNAME": "admin",
-    "ADMIN_PASSWORD": "sih2026admin",
-    "HOST": "0.0.0.0",
-    "PORT": "8000",
-    "DEBUG": "false"
-  }
+  ]
 }
