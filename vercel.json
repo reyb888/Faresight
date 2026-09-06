@@ -11,5 +11,8 @@
       "src": "/api/(.*)",
       "dest": "main.py"
     }
-  ]
+  ],
+  "environment": {
+    "PYTHON_VERSION": "3.12"
+  }
 }
