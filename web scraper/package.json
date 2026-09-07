@@ -1,19 +1,28 @@
 {
   "name": "faresight-crawler",
   "version": "1.0.0",
-  "description": "Faresight Web Scraper — custom Crawlee fork for SIH26056 airfare index",
+  "description": "Faresight Web Scraper — production Crawlee stealth fork for MoSPI Airfare Price Index (SIH26056)",
   "type": "module",
   "main": "faresight_crawler.js",
   "scripts": {
     "crawl": "node scraper.js",
-    "crawl:routes": "node scraper.js --routes DEL-BOM,BLR-DEL,MAA-DEL,CCU-BOM,HYD-DEL"
+    "crawl:routes": "node scraper.js --routes DEL-BOM,BLR-DEL,MAA-DEL,CCU-BOM,HYD-DEL",
+    "crawl:stealth": "node scraper.js --stealth --akamai",
+    "test": "node --check faresight_crawler.js && node --check scraper.js && echo '✓ syntax ok'"
   },
   "dependencies": {
     "crawlee": "^3.12.0",
     "playwright": "^1.48.0",
-    "httpx": "^0.1.0"
+    "playwright-extra": "^4.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.13.0",
+    "header-generator": "^2.1.2",
+    "better-sqlite3": "^9.1.0"
   },
-  "keywords": ["crawlee", "faresight", "sih26056", "airfare", "scraper"],
+  "optionalDependencies": {
+    "fingerprint-generator": "^2.1.2",
+    "fingerprint-injector": "^2.1.2"
+  },
+  "keywords": ["crawlee", "playwright-extra", "stealth", "akamai", "faresight", "sih26056", "airfare", "mospi"],
   "author": "Faresight SIH26056",
   "license": "MIT"
 }
