@@ -139,7 +139,7 @@ async def _fetch_single_route_async(
                     return None
 
             if response.status_code != 200:
-                logger.error(f"SerpApi HTTP {response.status_code} for {origin}->{destination} T+{lead_time_days}")
+                logger.error(f"SerpApi HTTP {response.status_code} for {origin}->{destination} T+{lead_time_days}: {response.text[:300]}")
                 return None
 
             results = response.json()
