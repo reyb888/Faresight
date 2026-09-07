@@ -1,0 +1,11 @@
+{
+	"origin_code": "DEL",
+	"destination_code": "BOM",
+	"capture_date": "2026-09-07",
+	"flight_date": "2026-09-22",
+	"lead_time_days": 15,
+	"airline_name": "IndiGo",
+	"price": 5985,
+	"data_source": "SERPAPI_FAILOVER",
+	"corridor": "DEL-BOM"
+}

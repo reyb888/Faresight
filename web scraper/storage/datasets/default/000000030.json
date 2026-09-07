@@ -1,0 +1,11 @@
+{
+	"origin_code": "HYD",
+	"destination_code": "DEL",
+	"capture_date": "2026-09-07",
+	"flight_date": "2026-09-10",
+	"lead_time_days": 3,
+	"airline_name": "IndiGo",
+	"price": 7373,
+	"data_source": "SERPAPI_FAILOVER",
+	"corridor": "HYD-DEL"
+}

@@ -1,0 +1,11 @@
+{
+	"origin_code": "MAA",
+	"destination_code": "DEL",
+	"capture_date": "2026-09-07",
+	"flight_date": "2026-09-14",
+	"lead_time_days": 7,
+	"airline_name": "Air India Express",
+	"price": 9638,
+	"data_source": "SERPAPI_FAILOVER",
+	"corridor": "MAA-DEL"
+}

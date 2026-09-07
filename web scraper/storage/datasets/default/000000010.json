@@ -1,0 +1,11 @@
+{
+	"origin_code": "BLR",
+	"destination_code": "DEL",
+	"capture_date": "2026-09-07",
+	"flight_date": "2026-09-12",
+	"lead_time_days": 5,
+	"airline_name": "IndiGo",
+	"price": 8715,
+	"data_source": "SERPAPI_FAILOVER",
+	"corridor": "BLR-DEL"
+}

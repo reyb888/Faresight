@@ -1,0 +1,11 @@
+{
+	"origin_code": "HYD",
+	"destination_code": "DEL",
+	"capture_date": "2026-09-07",
+	"flight_date": "2026-09-14",
+	"lead_time_days": 7,
+	"airline_name": "Air India",
+	"price": 6605,
+	"data_source": "SERPAPI_FAILOVER",
+	"corridor": "HYD-DEL"
+}

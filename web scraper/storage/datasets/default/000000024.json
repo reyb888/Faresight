@@ -1,0 +1,11 @@
+{
+	"origin_code": "CCU",
+	"destination_code": "BOM",
+	"capture_date": "2026-09-07",
+	"flight_date": "2026-09-12",
+	"lead_time_days": 5,
+	"airline_name": "Air India",
+	"price": 9008,
+	"data_source": "SERPAPI_FAILOVER",
+	"corridor": "CCU-BOM"
+}

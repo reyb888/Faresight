@@ -1,0 +1,11 @@
+{
+	"origin_code": "MAA",
+	"destination_code": "DEL",
+	"capture_date": "2026-09-07",
+	"flight_date": "2026-10-22",
+	"lead_time_days": 45,
+	"airline_name": "IndiGo",
+	"price": 9463,
+	"data_source": "SERPAPI_FAILOVER",
+	"corridor": "MAA-DEL"
+}

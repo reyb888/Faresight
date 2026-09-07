@@ -9,12 +9,11 @@
  * Failover: 12s timeout → SERPAPI_FAILOVER per master prompt
  */
 import { FaresightCrawler, Dataset, Log, humanDelay, humanMouseMove, waitForJsonResponse } from './faresight_crawler.js';
-import Database from 'better-sqlite3';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DB_PATH = process.env.AIRFARE_DB_PATH || path.join(__dirname, '..', 'airfare.db');
+const DB_PATH = process.env.AIRFARE_DB_PATH || path.join(__dirname, '..', 'demo_airfare.db');
 
 const ROUTES = [
   { origin: 'DEL', dest: 'BOM', label: 'DEL-BOM' },
@@ -40,7 +39,7 @@ function serpApiUrl(origin, dest, outboundDate, apiKey) {
 function extractBestFlight(payload) {
   const candidates = [...(payload.best_flights || []), ...(payload.other_flights || [])];
   let best = null; let bestPrice = Infinity;
-  const toPrice = v => { const c = ''.join([...String(v || '')].filter(ch => /[0-9.]/.test(ch))); const n = Number(c); return Number.isFinite(n) && n > 0 ? n : null; };
+  const toPrice = v => { const c = [...String(v || '')].filter(ch => /[0-9.]/.test(ch)).join(''); const n = Number(c); return Number.isFinite(n) && n > 0 ? n : null; };
   for (const opt of candidates) {
     const price = toPrice(opt.price);
     if (price && price < bestPrice) { bestPrice = price; best = { price, airline: opt.flights?.[0]?.airline || 'Unknown', duration: opt.total_duration || '' }; }
@@ -53,25 +52,38 @@ function extractBestFlight(payload) {
   return best;
 }
 
-// ---- SQLite helpers ----
-function openDb() {
-  const db = new Database(DB_PATH);
-  db.pragma('journal_mode = WAL'); db.pragma('foreign_keys = ON');
-  return db;
-}
-function routeIdFor(db, origin, dest) {
-  const row = db.prepare('SELECT id FROM routes WHERE origin_code = ? AND destination_code = ?').get(origin, dest);
-  return row?.id ?? null;
-}
+// ---- SQLite helpers (Node sqlite via Python helper to avoid native build) ----
+import { execFileSync } from 'child_process';
 function insertRecords(records, dataSource) {
   if (!records.length) return 0;
-  const db = openDb();
+  const py = `
+import sqlite3, json, sys
+import datetime
+db_path = r"${DB_PATH.replace(/\\/g, "\\\\")}"
+records = json.loads(sys.stdin.read())
+con = sqlite3.connect(db_path)
+cur = con.cursor()
+n=0
+for r in records:
+    rid = r.get('route_id')
+    if not rid:
+        cur.execute('SELECT id FROM routes WHERE origin_code=? AND destination_code=?', (r['origin_code'], r['destination_code']))
+        row = cur.fetchone()
+        rid = row[0] if row else None
+    if not rid:
+        continue
+    ds = r.get('data_source') or '${dataSource}'
+    cur.execute('INSERT INTO airfare_records (route_id, capture_date, flight_date, lead_time_days, airline_name, price, currency, fetched_at, data_source) VALUES (?,?,?,?,?,?,?,?,?)',
+                (rid, r['capture_date'], r['flight_date'], r['lead_time_days'], r.get('airline_name'), r['price'], r.get('currency','INR'), r.get('fetched_at') or datetime.datetime.utcnow().isoformat(), ds))
+    n+=1
+con.commit()
+con.close()
+print(n)
+`.replace('${dataSource}', dataSource);
   try {
-    const ins = db.prepare(`INSERT INTO airfare_records (route_id, capture_date, flight_date, lead_time_days, airline_name, price, currency, fetched_at, data_source)
-      VALUES (@route_id, @capture_date, @flight_date, @lead_time_days, @airline_name, @price, 'INR', @fetched_at, @data_source)`);
-    const tx = db.transaction((rows) => { let n = 0; for (const r of rows) { const rid = r.route_id ?? routeIdFor(db, r.origin_code, r.destination_code); if (!rid) continue; ins.run({ route_id: rid, capture_date: r.capture_date, flight_date: r.flight_date, lead_time_days: r.lead_time_days, airline_name: r.airline_name, price: r.price, fetched_at: new Date().toISOString(), data_source: r.data_source || dataSource }); n++; } return n; });
-    return tx(records);
-  } finally { db.close(); }
+    const out = execFileSync('python', ['-c', py], { input: JSON.stringify(records), encoding: 'utf-8' });
+    return parseInt(String(out).trim(), 10) || 0;
+  } catch { return 0; }
 }
 
 // ---- XHR/DOM extraction for OTA/Google Flights ----
@@ -211,13 +223,12 @@ if (routesArg) {
 }
 
 if (useCrawlee) {
-  const today = fmtDate(new Date());
+  const todayStr = fmt(new Date());
   const requests = [];
   for (const r of ROUTES) for (const w of WINDOWS) {
     const out = new Date(Date.now() + w * 864e5);
-    // Example OTA/Google Flights URL — replace with your target portal per route
     const url = `https://www.google.com/travel/flights?q=Flights%20to%20${r.dest}%20from%20${r.origin}%20on%20${fmt(out)}`;
-    requests.push({ url, userData: { origin: r.origin, dest: r.dest, flightDate: fmt(out), leadTime: w, captureDate: today } });
+    requests.push({ url, userData: { origin: r.origin, dest: r.dest, flightDate: fmt(out), leadTime: w, captureDate: todayStr } });
   }
   await crawler.run(requests);
 } else {
@@ -225,4 +236,3 @@ if (useCrawlee) {
 }
 await Dataset.exportToCSV('faresight_live_fares');
 log.info('Done — exported faresight_live_fares.csv');
-function fmtDate(d) { return d.toISOString().slice(0, 10); }
