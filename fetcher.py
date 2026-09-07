@@ -216,25 +216,59 @@ def _extract_lowest_flight(results: Dict[str, Any]) -> Tuple[Optional[float], Op
     lowest_airline = None
     lowest_duration = None
 
+    def _to_price(value) -> Optional[float]:
+        if value is None:
+            return None
+        try:
+            cleaned = "".join(ch for ch in str(value) if ch.isdigit() or ch == ".")
+            return float(cleaned) if cleaned else None
+        except (ValueError, TypeError):
+            return None
+
+    def _consider(price_val, airline, duration):
+        nonlocal lowest_price, lowest_airline, lowest_duration
+        price = _to_price(price_val)
+        if price is None:
+            return
+        if lowest_price is None or price < lowest_price:
+            lowest_price = price
+            lowest_airline = airline
+            lowest_duration = duration
+
     try:
-        flights_data = results.get("flights", [])
-        for flight_group in flights_data:
-            routes = flight_group.get("routes", [])
-            for route in routes:
-                fare_groups = route.get("fare_groups", [])
-                for fare_group in fare_groups:
-                    flights = fare_group.get("flights", [])
-                    for flight in flights:
-                        price_str = flight.get("price")
-                        if price_str:
-                            try:
-                                price = float(str(price_str).replace(",", ""))
-                            except (ValueError, TypeError):
-                                continue
-                            if lowest_price is None or price < lowest_price:
-                                lowest_price = price
-                                lowest_airline = flight.get("airline") or route.get("airline")
-                                lowest_duration = flight.get("duration") or route.get("duration")
+        # Modern google_flights shape: best_flights / other_flights options
+        options = []
+        for key in ("best_flights", "other_flights"):
+            group = results.get(key)
+            if isinstance(group, list):
+                options.extend([o for o in group if isinstance(o, dict)])
+        for opt in options:
+            segments = opt.get("flights") or []
+            first = segments[0] if segments else {}
+            _consider(
+                opt.get("price"),
+                first.get("airline"),
+                opt.get("total_duration") or first.get("duration"),
+            )
+
+        # Legacy nested shape: flights -> routes -> fare_groups -> flights
+        for flight_group in results.get("flights", []):
+            if not isinstance(flight_group, dict):
+                continue
+            for route in flight_group.get("routes", []):
+                if not isinstance(route, dict):
+                    continue
+                for fare_group in route.get("fare_groups", []):
+                    if not isinstance(fare_group, dict):
+                        continue
+                    for flight in fare_group.get("flights", []):
+                        if not isinstance(flight, dict):
+                            continue
+                        _consider(
+                            flight.get("price"),
+                            flight.get("airline") or route.get("airline"),
+                            flight.get("duration") or route.get("duration"),
+                        )
     except Exception as e:
         logger.warning("Failed to extract fare from response: %s", e)
 

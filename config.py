@@ -9,6 +9,11 @@ load_dotenv()
 SERP_API_KEYS_ENV = os.environ.get("SERP_API_KEYS", "")
 SERP_API_KEYS = [k.strip() for k in SERP_API_KEYS_ENV.split(",") if k.strip()]
 
+# Also read individual SERP_API_KEY_1 through SERP_API_KEY_5 for Vercel
+for i in range(1, 6):
+    key = os.environ.get(f"SERP_API_KEY_{i}")
+    if key and key not in SERP_API_KEYS:
+        SERP_API_KEYS.append(key.strip())
 
 # Active pointer for round-robin rotation
 SERP_API_KEY_POINTER = 0
@@ -54,7 +59,7 @@ DEBUG = os.environ.get("DEBUG", "false").lower() == "true"
 # ============================================================
 # SERPAPI FETCHER SETTINGS
 # ============================================================
-SERPAPI_DEFAULT_TIMEOUT = float(os.environ.get("SERPAPI_TIMEOUT", "4.0"))  # seconds
+SERPAPI_DEFAULT_TIMEOUT = float(os.environ.get("SERPAPI_TIMEOUT", "25.0"))  # seconds
 SERPAPI_MAX_RETRIES = int(os.environ.get("SERPAPI_MAX_RETRIES", "2"))
 SERPAPI_FALLBACK_TO_CACHE = os.environ.get("SERPAPI_FALLBACK_TO_CACHE", "true").lower() == "true"
 
