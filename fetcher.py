@@ -105,6 +105,7 @@ async def _fetch_single_route_async(
         "departure_id": origin,
         "arrival_id": destination,
         "outbound_date": departure_date.isoformat(),
+        "type": "2",
         "currency": "INR",
         "hl": "en",
         "api_key": api_key,
