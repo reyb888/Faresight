@@ -43,18 +43,48 @@ POSTGRES_SYNC_URL = os.environ.get("DATABASE_URL_SYNC", "")
 # invocations so live SerpApi inserts survive cold starts (fix for 0 fetches
 # for today / stale Faresight Daily). Fall back to ephemeral /tmp SQLite only
 # when no Postgres URL is configured.
+def _try_postgres(url: str):
+    try:
+        return create_engine(
+            url, echo=False, future=True,
+            pool_pre_ping=True, pool_recycle=300, connect_args={"connect_timeout": 5, "options": "-c statement_timeout=8000"},
+        )
+    except ModuleNotFoundError as e:
+        if "psycopg2" in str(e):
+            logging.warning(f"psycopg2 not installed, falling back to SQLite: {e}")
+            return None
+        raise
+    except Exception as e:
+        logging.warning(f"Postgres engine failed, falling back to SQLite: {e}")
+        return None
+
+_postgres_engine = None
 if POSTGRES_SYNC_URL and POSTGRES_SYNC_URL.startswith("postgresql"):
-    _USE_SUPABASE = True
-    _engine = create_engine(
-        POSTGRES_SYNC_URL, echo=False, future=True,
-        pool_pre_ping=True, pool_recycle=300, connect_args={"connect_timeout": 5, "options": "-c statement_timeout=8000"},
-    )
+    _postgres_engine = _try_postgres(POSTGRES_SYNC_URL)
+    if _postgres_engine is not None:
+        _USE_SUPABASE = True
+        _engine = _postgres_engine
+    else:
+        _USE_SUPABASE = False
+        if os.environ.get("VERCEL") == "1":
+            DB_PATH = "/tmp/airfare.db"
+            SQLITE_URL = f"sqlite:///{DB_PATH}"
+            _engine = create_engine(SQLITE_URL, echo=False, connect_args={"check_same_thread": False})
+        else:
+            _engine = create_engine(SQLITE_URL, echo=False, connect_args={"check_same_thread": False})
 elif POSTGRES_URL and POSTGRES_URL.startswith("postgresql"):
-    _USE_SUPABASE = True
-    _engine = create_engine(
-        POSTGRES_URL, echo=False, future=True,
-        pool_pre_ping=True, pool_recycle=300, connect_args={"connect_timeout": 5, "options": "-c statement_timeout=8000"},
-    )
+    _postgres_engine = _try_postgres(POSTGRES_URL)
+    if _postgres_engine is not None:
+        _USE_SUPABASE = True
+        _engine = _postgres_engine
+    else:
+        _USE_SUPABASE = False
+        if os.environ.get("VERCEL") == "1":
+            DB_PATH = "/tmp/airfare.db"
+            SQLITE_URL = f"sqlite:///{DB_PATH}"
+            _engine = create_engine(SQLITE_URL, echo=False, connect_args={"check_same_thread": False})
+        else:
+            _engine = create_engine(SQLITE_URL, echo=False, connect_args={"check_same_thread": False})
 elif os.environ.get("VERCEL") == "1":
     DB_PATH = "/tmp/airfare.db"
     SQLITE_URL = f"sqlite:///{DB_PATH}"
