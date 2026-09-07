@@ -102,11 +102,11 @@ async def _fetch_single_route_async(
     """
     params = {
         "engine": "google_flights",
-        "q": f"{origin}+{destination}",
-        "gl": "in",
+        "departure_id": origin,
+        "arrival_id": destination,
+        "outbound_date": departure_date.isoformat(),
+        "currency": "INR",
         "hl": "en",
-        "date": departure_date.isoformat(),
-        "chw": "1",
         "api_key": api_key,
     }
 
@@ -355,13 +355,15 @@ def get_route_id_by_codes(origin: str, destination: str) -> Optional[int]:
 
 def insert_airfare_records_by_dict(records: List[Dict[str, Any]]) -> int:
     """Insert airfare records dict using database module functions."""
-    from database import insert_airfare_records
+    from database import SessionLocal, insert_airfare_records
 
-    # Extract just the fields we need
+    # Extract just the fields we need (keep origin/destination for route_id resolution)
     simplified = []
     for rec in records:
         simplified.append({
             "route_id": rec.get("route_id"),
+            "origin_code": rec.get("origin_code"),
+            "destination_code": rec.get("destination_code"),
             "capture_date": rec.get("capture_date"),
             "flight_date": rec.get("flight_date"),
             "lead_time_days": rec.get("lead_time_days"),
@@ -370,7 +372,11 @@ def insert_airfare_records_by_dict(records: List[Dict[str, Any]]) -> int:
             "currency": rec.get("currency", "INR"),
             "data_source": rec.get("data_source", "SERPAPI"),
         })
-    return insert_airfare_records(None, simplified)  # Note: this uses the standalone function
+    db = SessionLocal()
+    try:
+        return insert_airfare_records(db, simplified)
+    finally:
+        db.close()
 
 
 # ---------------------------------------------------------------------------
