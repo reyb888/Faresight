@@ -3,191 +3,218 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Faresight - Real-time Airfare Price Index for India</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <title>Faresight — Airfare Price Index for India • MoSPI SIH26056</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <style>
-    :root{--ink:#0f172a;--line:#e2e8f0;--muted:#64748b;--accent:#0e4a7a}
+    @import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap');
+    :root{--ink:#0f172a;--line:#e2e8f0;--muted:#64748b;--accent:#0e4a7a;--accent-soft:#e8f0f6;--paper:#fcfdf8;}
+    *{font-family:'Geist',system-ui,sans-serif}
+    .mono{font-family:'Geist Mono',monospace}
+    .serif{font-family:'Newsreader',Georgia,serif}
     html{scroll-behavior:smooth}
-    body{font-family:'DM Sans',system-ui,sans-serif;background:#fcfdf8;color:var(--ink)}
-    .mono{font-family:'JetBrains Mono',monospace}
-    .reveal{opacity:0;transform:translateY(12px);transition:opacity .6s cubic-bezier(.16,1,.3,1),transform .6s cubic-bezier(.16,1,.3,1)}
+    body{background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased}
+    .reveal{opacity:0;transform:translateY(10px);transition:opacity .55s cubic-bezier(.16,1,.3,1),transform .55s cubic-bezier(.16,1,.3,1)}
     .reveal.in{opacity:1;transform:none}
     @media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}}
+    ::selection{background:#0e4a7a;color:#fff}
   </style>
 </head>
 <body class="antialiased">
-<nav class="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-slate-200">
-  <div class="max-w-7xl mx-auto px-6 h-[64px] flex items-center justify-between">
+<!-- NAV — 68px, single line, no wrap -->
+<nav class="sticky top-0 z-40 bg-white/85 backdrop-blur-xl border-b border-slate-200">
+  <div class="max-w-[1280px] mx-auto px-6 h-[68px] flex items-center justify-between">
     <div class="flex items-center gap-3">
-      <div class="w-9 h-9 rounded-xl bg-slate-900 text-white grid place-items-center font-bold">F</div>
+      <div class="w-9 h-9 rounded-[11px] bg-slate-900 text-white grid place-items-center text-[13px] font-bold tracking-tight">F</div>
       <div>
-        <div class="text-sm font-semibold tracking-tight leading-none">Faresight</div>
-        <div class="text-xs text-slate-500">MoSPI • SIH26056</div>
+        <div class="text-[14px] font-semibold tracking-tight leading-none">Faresight</div>
+        <div class="text-[11px] tracking-wide text-slate-500 font-medium">MoSPI • SIH26056</div>
       </div>
+      <span class="hidden sm:inline-flex ml-3 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-semibold tracking-wide">LIVE • Base 100</span>
     </div>
-    <div class="hidden md:flex items-center gap-2 text-sm">
-      <a href="/#index" class="px-3 py-1.5 rounded-full hover:bg-slate-100">Index</a>
-      <a href="/#routes" class="px-3 py-1.5 rounded-full hover:bg-slate-100">Routes</a>
+    <div class="flex items-center gap-1.5 text-[13.5px]">
+      <a href="#index" class="hidden md:inline-flex px-3.5 py-1.5 rounded-full hover:bg-slate-100 text-slate-600 font-medium transition">Index</a>
+      <a href="#routes" class="hidden md:inline-flex px-3.5 py-1.5 rounded-full hover:bg-slate-100 text-slate-600 font-medium transition">Routes</a>
+      <span class="hidden lg:inline-flex items-center gap-2 text-[12px] text-slate-500 border-l border-slate-200 pl-3 ml-1"><span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Updates daily 20:00 UTC</span>
     </div>
   </div>
 </nav>
 
-<main class="max-w-7xl mx-auto px-6">
-  <section class="grid md:grid-cols-2 gap-8 items-center pt-12 md:pt-16 pb-8 reveal">
-    <div>
-      <p class="text-xs font-semibold tracking-widest uppercase text-slate-500">SIH26056 • For the Consumer Price Index</p>
-      <h1 class="mt-3 text-4xl md:text-5xl font-semibold tracking-tight leading-none">A live airfare index for India</h1>
-      <p class="mt-4 text-base leading-relaxed text-slate-600 max-w-[52ch]">DGCA averages arrive two months late. Faresight scrapes airlines and OTAs daily and publishes a Base 100 index weighted by passenger traffic.</p>
-      <div class="mt-6 flex gap-3">
-        <a href="#index" class="px-5 py-3 rounded-full bg-slate-900 text-white text-sm font-semibold">View live index</a>
-      </div>
-      <div class="mt-6 flex flex-wrap gap-3 text-xs text-slate-600">
-        <span class="inline-flex items-center gap-1.5"><i class="ph ph-calendar-check text-slate-700"></i> Daily scrape</span>
-        <span class="inline-flex items-center gap-1.5"><i class="ph ph-funnel text-slate-700"></i> Outliers removed</span>
-        <span class="inline-flex items-center gap-1.5"><i class="ph ph-scales text-slate-700"></i> DGCA weighted</span>
-      </div>
+<main class="max-w-[1280px] mx-auto px-6">
+<!-- HERO — asymmetric split, 2 lines headline, 20-word subtext, CTA visible without scroll, pt-16 max -->
+<section class="grid lg:grid-cols-[1.05fr_0.95fr] gap-8 lg:gap-10 items-center pt-10 lg:pt-16 pb-8 reveal">
+  <div>
+    <div class="inline-flex items-center gap-2 text-[11px] font-semibold tracking-widest uppercase text-slate-500">
+      <span class="w-6 h-[1px] bg-slate-300"></span> SIH26056 • Consumer Price Index
     </div>
+    <h1 class="serif mt-3 text-[38px] lg:text-[52px] font-[500] tracking-[-0.03em] leading-[0.95]">A live airfare index<br>for India.</h1>
+    <p class="mt-3 text-[15px] leading-relaxed text-slate-600 max-w-[46ch]">DGCA averages arrive two months late. Faresight scrapes airlines and OTAs daily and publishes a Base 100 index.</p>
+    <div class="mt-6 flex gap-3">
+      <a href="#index-panel" class="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-slate-900 text-white text-[13.5px] font-semibold hover:bg-black hover:-translate-y-[1px] active:scale-[0.98] transition">View live index <i class="ph ph-arrow-right text-[13px]"></i></a>
+      <a href="#method" class="hidden sm:inline-flex items-center px-5 py-2.5 rounded-full bg-white border border-slate-200 text-[13.5px] font-semibold hover:border-slate-300 transition">How it works</a>
+    </div>
+    <div class="mt-5 flex gap-5 text-[12px] text-slate-500 border-t border-slate-200 pt-4 max-w-[46ch]">
+      <span class="inline-flex items-center gap-1.5"><i class="ph ph-check-circle text-emerald-600"></i> Daily scrape</span>
+      <span class="inline-flex items-center gap-1.5"><i class="ph ph-check-circle text-emerald-600"></i> MAD outliers removed</span>
+      <span class="inline-flex items-center gap-1.5"><i class="ph ph-check-circle text-emerald-600"></i> DGCA weighted</span>
+    </div>
+  </div>
+  <div class="relative">
+    <img src="https://picsum.photos/seed/faresight-hero-runway/860/620" alt="Aerial view of runway and flight corridors at dusk" class="w-full h-[360px] lg:h-[420px] object-cover rounded-[20px] border border-slate-200">
+    <div class="absolute -bottom-4 -left-3 sm:-left-4 bg-white border border-slate-200 rounded-2xl p-4 shadow-[0_8px_30px_rgba(0,0,0,0.08)] max-w-[260px]">
+      <div class="text-[11px] font-semibold tracking-wide text-slate-500">FARESIGHT DAILY</div>
+      <div id="hero-index" class="mono text-[22px] font-semibold tracking-tight mt-1">— <span class="text-[13px] text-slate-500 font-normal">/ 100</span></div>
+      <div id="heroDelta" class="text-[12px] font-medium text-slate-600 mt-1">Loading live index</div>
+    </div>
+  </div>
+</section>
+
+<!-- METRIC STRIP — plain layout, mono numbers, no cards -->
+<section id="index-panel" class="reveal border-y border-slate-200">
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-0 divide-x divide-slate-200">
+    <div class="py-6 pr-6">
+      <div class="text-[11px] font-semibold tracking-widest uppercase text-slate-500">Live index</div>
+      <div id="statIndex" class="mono text-[30px] font-semibold tracking-tighter mt-1">—</div>
+      <div class="text-[12px] text-slate-500 mt-1">Base 100 • Jan 6 2026</div>
+    </div>
+    <div class="py-6 px-6">
+      <div class="text-[11px] font-semibold tracking-widest uppercase text-slate-500">Corridors</div>
+      <div class="mono text-[30px] font-semibold tracking-tighter mt-1">5</div>
+      <div class="text-[12px] text-slate-500 mt-1">DEL • BLR • MAA • CCU • HYD</div>
+    </div>
+    <div class="py-6 px-6">
+      <div class="text-[11px] font-semibold tracking-widest uppercase text-slate-500">Windows</div>
+      <div class="mono text-[30px] font-semibold tracking-tighter mt-1">T+1 — T+45</div>
+      <div class="text-[12px] text-slate-500 mt-1">Advance purchase aware</div>
+    </div>
+    <div class="py-6 pl-6">
+      <div class="text-[11px] font-semibold tracking-widest uppercase text-slate-500">Quotes today</div>
+      <div id="statQuotes" class="mono text-[30px] font-semibold tracking-tighter mt-1">—</div>
+      <div class="text-[12px] text-slate-500 mt-1">Median, not mean</div>
+    </div>
+  </div>
+</section>
+
+<!-- INDEX TRAJECTORY + METHOD — bento with rhythm (not 3 equal cards) -->
+<section id="index" class="grid lg:grid-cols-12 gap-6 pt-8 reveal">
+  <div class="lg:col-span-8 bg-white border border-slate-200 rounded-[20px] p-6">
+    <div class="flex items-baseline justify-between">
+      <h2 class="text-[16px] font-semibold tracking-tight">Index trajectory</h2>
+      <span class="text-[11px] font-semibold tracking-widest uppercase text-slate-500">Daily • Base 100</span>
+    </div>
+    <div class="h-[280px] mt-4"><canvas id="indexChart"></canvas></div>
+  </div>
+  <div id="method" class="lg:col-span-4 bg-slate-900 text-white rounded-[20px] p-6 relative overflow-hidden flex flex-col">
+    <img src="https://picsum.photos/seed/faresight-method-board/600/420" alt="" class="absolute inset-0 w-full h-full object-cover opacity-[0.12]">
     <div class="relative">
-      <img src="https://picsum.photos/seed/faresight-india-flight/800/600" alt="Aerial view over India showing flight corridors" class="w-full h-[380px] object-cover rounded-2xl border border-slate-200">
-      <div class="absolute -bottom-4 -left-4 bg-white border border-slate-200 rounded-2xl p-4 shadow-sm max-w-[260px]">
-        <div class="text-xs font-semibold tracking-widest uppercase text-slate-500">Faresight Daily</div>
-        <div id="hero-index" class="mono text-2xl font-semibold mt-1">104.24 <span class="text-sm text-slate-500 font-normal">/ 100</span></div>
-        <div class="text-xs text-emerald-700 mt-1">Up 4.24 percent versus base week Jan 6 2026</div>
+      <h3 class="text-[15px] font-semibold tracking-tight">How the index is built</h3>
+      <p class="text-[13px] leading-relaxed text-slate-300 mt-2">Median fare per route and window, weighted by DGCA traffic. Base week never changes.</p>
+      <div class="mt-4 space-y-3 text-[13px] leading-relaxed">
+        <div class="flex gap-3"><span class="w-6 h-6 rounded-full bg-white text-slate-900 grid place-items-center text-[11px] font-bold">1</span><span><span class="font-semibold text-white">Observe</span> <span class="text-slate-300">— airlines + OTAs daily</span></span></div>
+        <div class="flex gap-3"><span class="w-6 h-6 rounded-full bg-white text-slate-900 grid place-items-center text-[11px] font-bold">2</span><span><span class="font-semibold text-white">Clean</span> <span class="text-slate-300">— dedupe, MAD, median</span></span></div>
+        <div class="flex gap-3"><span class="w-6 h-6 rounded-full bg-white text-slate-900 grid place-items-center text-[11px] font-bold">3</span><span><span class="font-semibold text-white">Weight</span> <span class="text-slate-300">— price relative × share</span></span></div>
       </div>
+      <div class="mt-5 mono text-[12px] bg-white text-slate-900 rounded-xl px-3 py-2.5">APIX(t) = Σ [ w × P(t)/P(0) ] × 100</div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <section id="index" class="grid md:grid-cols-12 gap-6 py-6 border-y border-slate-200 reveal">
-    <div class="md:col-span-5 bg-white border border-slate-200 rounded-2xl p-6">
-      <div class="flex items-start justify-between gap-4">
-        <div>
-          <div class="text-xs font-semibold tracking-widest uppercase text-slate-500">Faresight Daily</div>
-          <div id="idx-value" class="mono text-4xl font-semibold tracking-tight mt-2">- <span class="text-base text-slate-500 font-normal">/ 100</span></div>
-          <div id="idx-sub" class="text-sm text-slate-600 mt-2">Loading index</div>
-        </div>
-        <div id="idx-delta" class="px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold">-</div>
-      </div>
-      <div id="idx-spark" class="mt-4 h-[72px] rounded-xl border border-dashed border-slate-200 bg-slate-50 grid place-items-center text-xs text-slate-500">Trend sparkline loads with daily index</div>
-      <div class="mt-4 grid grid-cols-3 divide-x divide-slate-200 border-y border-slate-200">
-        <div class="py-3 px-3"><div class="text-xs tracking-widest uppercase text-slate-500 font-semibold">Routes</div><div id="meta-routes" class="mono text-sm font-semibold mt-1">6</div></div>
-        <div class="py-3 px-3"><div class="text-xs tracking-widest uppercase text-slate-500 font-semibold">Windows</div><div class="mono text-sm font-semibold mt-1">T+1 to T+45</div></div>
-        <div class="py-3 px-3"><div class="text-xs tracking-widest uppercase text-slate-500 font-semibold">Quotes today</div><div id="meta-quotes" class="mono text-sm font-semibold mt-1">-</div></div>
-      </div>
-      <p class="text-xs leading-relaxed text-slate-500 mt-3">Weighted by DGCA traffic. Base week never changes. Missing routes are reweighted, not zero filled.</p>
+<!-- CONTROLS — sticky, single row, no wrap on desktop -->
+<section class="sticky top-[68px] z-30 bg-[#fcfdf8]/90 backdrop-blur border border-slate-200 rounded-2xl p-4 mt-6 flex flex-wrap gap-4 items-end justify-between reveal">
+  <div class="flex-1 min-w-[200px]">
+    <label for="route-select" class="block text-[11px] font-semibold tracking-widest uppercase text-slate-500 mb-2">Route</label>
+    <select id="route-select" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-[13px] font-medium focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-300"></select>
+  </div>
+  <div class="flex-1 min-w-[200px]">
+    <div class="text-[11px] font-semibold tracking-widest uppercase text-slate-500 mb-2">Advance purchase window</div>
+    <div id="window-chips" class="flex flex-wrap gap-1.5"></div>
+  </div>
+  <div>
+    <div class="text-[11px] font-semibold tracking-widest uppercase text-slate-500 mb-2">Frequency</div>
+    <div id="freq-seg" class="inline-flex p-1 rounded-full border border-slate-200 bg-white">
+      <button data-freq="daily" class="px-3 py-1.5 rounded-full text-[12px] font-semibold bg-slate-900 text-white">Daily</button>
+      <button data-freq="weekly" class="px-3 py-1.5 rounded-full text-[12px] font-semibold text-slate-600">Weekly</button>
+      <button data-freq="monthly" class="px-3 py-1.5 rounded-full text-[12px] font-semibold text-slate-600">Monthly</button>
     </div>
-    <div class="md:col-span-7 bg-slate-900 text-white rounded-2xl p-6 relative overflow-hidden">
-      <img src="https://picsum.photos/seed/faresight-method-departure/800/500" alt="Airport departure board close up" class="absolute inset-0 w-full h-full object-cover opacity-15">
-      <div class="relative">
-        <h2 class="font-semibold tracking-tight">How the index is built</h2>
-        <p class="text-sm leading-relaxed text-slate-300 mt-2 max-w-[60ch]">We sample each route and window, keep the median fare, then weight by DGCA traffic. No survey, just observed prices.</p>
-        <div class="mt-4 divide-y divide-white/10 border-y border-white/10">
-          <div class="flex gap-3 items-start py-3"><span class="w-7 h-7 rounded-full bg-white text-slate-900 grid place-items-center text-xs font-bold">1</span><div><div class="text-sm font-semibold">Observe</div><div class="text-xs text-slate-300">Scrape IndiGo, Air India, Akasa, SpiceJet, MakeMyTrip, ixigo, Goibibo daily</div></div></div>
-          <div class="flex gap-3 items-start py-3"><span class="w-7 h-7 rounded-full bg-white text-slate-900 grid place-items-center text-xs font-bold">2</span><div><div class="text-sm font-semibold">Clean</div><div class="text-xs text-slate-300">De duplicate, flag outliers with MAD, keep median per cell</div></div></div>
-          <div class="flex gap-3 items-start py-3"><span class="w-7 h-7 rounded-full bg-white text-slate-900 grid place-items-center text-xs font-bold">3</span><div><div class="text-sm font-semibold">Weight</div><div class="text-xs text-slate-300">Price relative times DGCA share, then Base 100</div></div></div>
-        </div>
-        <div class="mt-4 mono text-xs bg-white rounded-xl text-slate-900 p-3">F(t) = sum [ w × ( P(t) / P(0) ) ] × 100</div>
-      </div>
-    </div>
-  </section>
+  </div>
+</section>
 
-  <section class="sticky top-[64px] z-30 bg-[#fcfdf8]/90 backdrop-blur border border-slate-200 rounded-2xl p-4 mt-6 flex flex-wrap gap-4 items-center justify-between reveal">
-    <div class="flex-1 min-w-[220px]">
-      <div class="text-xs font-semibold tracking-widest uppercase text-slate-500 mb-2">Route</div>
-      <select id="route-select" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-300"></select>
+<!-- ROUTE DETAIL — 8/4 split, not equal cards -->
+<section id="routes" class="grid lg:grid-cols-12 gap-6 mt-6 reveal">
+  <div class="lg:col-span-8 bg-white border border-slate-200 rounded-[20px] p-6">
+    <div class="flex items-baseline justify-between">
+      <h2 id="trend-title" class="text-[15px] font-semibold tracking-tight">Index trend</h2>
+      <span id="trend-sub" class="text-[11px] text-slate-500">Daily • Base 100</span>
     </div>
-    <div class="flex-1 min-w-[220px]">
-      <div class="text-xs font-semibold tracking-widest uppercase text-slate-500 mb-2">Advance purchase window</div>
-      <div id="window-chips" class="flex flex-wrap gap-2"></div>
+    <div id="main-chart" class="h-[320px] mt-3"></div>
+    <div class="flex justify-end gap-2 mt-3">
+      <button id="btn-csv-main" class="px-3 py-1.5 rounded-full border border-slate-200 bg-white text-[12px] font-semibold hover:border-slate-300 transition">Download CSV</button>
+      <button id="btn-compare" class="px-3 py-1.5 rounded-full bg-slate-900 text-white text-[12px] font-semibold hover:bg-black transition">Compare routes</button>
     </div>
-    <div>
-      <div class="text-xs font-semibold tracking-widest uppercase text-slate-500 mb-2">Frequency</div>
-      <div id="freq-seg" class="inline-flex p-1 rounded-full border border-slate-200 bg-white">
-        <button data-freq="daily" class="px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-900 text-white">Daily</button>
-        <button data-freq="weekly" class="px-3 py-1.5 rounded-full text-xs font-semibold text-slate-600">Weekly</button>
-        <button data-freq="monthly" class="px-3 py-1.5 rounded-full text-xs font-semibold text-slate-600">Monthly</button>
-      </div>
-    </div>
-  </section>
-
-  <section id="routes" class="grid lg:grid-cols-12 gap-6 mt-6 reveal">
-    <div class="lg:col-span-8 bg-white border border-slate-200 rounded-2xl p-6">
-      <div class="flex items-baseline justify-between gap-4">
-        <h2 id="trend-title" class="font-semibold tracking-tight">Index trend</h2>
-        <span id="trend-sub" class="text-xs text-slate-500">Daily • Base 100</span>
-      </div>
-      <div id="main-chart" class="h-[340px] mt-3"></div>
-      <div class="flex justify-end gap-2 mt-3">
-        <button id="btn-csv-main" class="px-3 py-1.5 rounded-full border border-slate-200 bg-white text-xs font-semibold">Download CSV</button>
-        <button id="btn-compare" class="px-3 py-1.5 rounded-full bg-slate-900 text-white text-xs font-semibold">Compare routes</button>
-      </div>
-    </div>
-    <div class="lg:col-span-4 bg-white border border-slate-200 rounded-2xl p-6">
-      <h2 class="font-semibold tracking-tight">Route detail</h2>
-      <p id="route-sub" class="text-xs text-slate-500 mt-1">Select a route above</p>
-      <div id="route-empty" class="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center text-sm leading-relaxed text-slate-600">Pick a route to see median fare history and quote counts. Try <b>Delhi to Mumbai</b> first.</div>
-      <div id="route-table-wrap" class="hidden mt-4">
-        <table class="w-full text-sm">
-          <thead class="text-xs tracking-widest uppercase text-slate-500 border-b border-slate-200"><tr><th class="py-2 text-left font-semibold">Date</th><th class="py-2 text-right font-semibold">Median fare</th><th class="py-2 text-right font-semibold">Quotes</th></tr></thead>
-          <tbody id="route-tbody" class="divide-y divide-slate-100"></tbody>
-        </table>
-        <button id="btn-csv-route" class="mt-3 w-full py-2 rounded-full border border-slate-200 bg-white text-xs font-semibold">Download route CSV</button>
-      </div>
-    </div>
-  </section>
-
-  <section class="grid lg:grid-cols-2 gap-6 mt-6 reveal">
-    <div class="bg-white border border-slate-200 rounded-2xl p-6">
-      <h2 class="font-semibold tracking-tight">Fare by window</h2>
-      <p class="text-xs text-slate-500 mt-1">Latest day • median fare per window • darker is higher</p>
-      <div id="heatmap" class="grid grid-cols-3 sm:grid-cols-5 gap-2 mt-4"></div>
-      <div id="heatmap-empty" class="hidden mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-600">No heatmap data yet. Run the daily batch.</div>
-    </div>
-    <div class="bg-white border border-slate-200 rounded-2xl p-6">
-      <h2 class="font-semibold tracking-tight">Lead time curve</h2>
-      <p id="elasticity-sub" class="text-xs text-slate-500 mt-1">Fare versus days booked in advance</p>
-      <div id="elasticity-chart" class="h-[280px] mt-3"></div>
-      <p class="text-xs leading-relaxed text-slate-500 mt-2">T+30 and T+45 are usually cheapest. T+1 spikes before departure. This curve makes the index advance purchase aware.</p>
-    </div>
-  </section>
-
-  <section class="bg-white border border-slate-200 rounded-2xl p-6 mt-6 reveal">
-    <div class="flex items-baseline justify-between gap-4">
-      <h2 class="font-semibold tracking-tight">Validation against DGCA</h2>
-      <span class="text-xs text-slate-500">Monthly backtest</span>
-    </div>
-    <div id="backtest-chart" class="h-[320px] mt-3"></div>
-    <div class="overflow-auto mt-4">
-      <table class="w-full text-sm">
-        <thead class="text-xs tracking-widest uppercase text-slate-500 border-b border-slate-200"><tr><th class="py-2 text-left font-semibold">Period</th><th class="py-2 text-right font-semibold">Faresight</th><th class="py-2 text-right font-semibold">DGCA avg</th><th class="py-2 text-right font-semibold">Deviation</th></tr></thead>
-        <tbody id="backtest-tbody"><tr><td colspan="4" class="py-6 text-center text-sm text-slate-500">Loading backtest</td></tr></tbody>
+  </div>
+  <div class="lg:col-span-4 bg-white border border-slate-200 rounded-[20px] p-6">
+    <h2 class="text-[15px] font-semibold tracking-tight">Route detail</h2>
+    <p id="route-sub" class="text-[12px] text-slate-500 mt-1">Select a route</p>
+    <div id="route-empty" class="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-5 text-center text-[13px] leading-relaxed text-slate-600">Pick a route to see median fares. Try <b>Delhi to Mumbai</b>.</div>
+    <div id="route-table-wrap" class="hidden mt-4">
+      <table class="w-full text-[13px]">
+        <thead class="text-[11px] tracking-widest uppercase text-slate-500 border-b border-slate-200"><tr><th class="py-2 text-left font-semibold">Date</th><th class="py-2 text-right font-semibold">Median</th><th class="py-2 text-right font-semibold">Quotes</th></tr></thead>
+        <tbody id="route-tbody" class="divide-y divide-slate-100"></tbody>
       </table>
+      <button id="btn-csv-route" class="mt-3 w-full py-2 rounded-full border border-slate-200 bg-white text-[12px] font-semibold">Download CSV</button>
     </div>
-  </section>
+  </div>
+</section>
 
-  <footer class="py-8 text-center text-xs leading-relaxed text-slate-500 border-t border-slate-200 mt-8">Ministry of Statistics and Programme Implementation • SIH 2026 SIH26056 • Faresight • Sources: IndiGo, Air India, Akasa, SpiceJet, MakeMyTrip, ixigo, Goibibo • API: /v1/index /v1/routes /v1/heatmap</footer>
+<!-- HEATMAP + ELASTICITY — 2-col, not 6 equal rows -->
+<section class="grid lg:grid-cols-2 gap-6 mt-6 reveal">
+  <div class="bg-white border border-slate-200 rounded-[20px] p-6">
+    <h2 class="text-[15px] font-semibold tracking-tight">Fare by window</h2>
+    <p class="text-[12px] text-slate-500 mt-1">Latest snapshot • darker is higher</p>
+    <div id="heatmap" class="grid grid-cols-3 sm:grid-cols-5 gap-2 mt-4"></div>
+    <div id="heatmap-empty" class="hidden mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-5 text-center text-[13px] text-slate-600">No heatmap yet. Run the daily batch.</div>
+  </div>
+  <div class="bg-white border border-slate-200 rounded-[20px] p-6">
+    <h2 class="text-[15px] font-semibold tracking-tight">Lead time curve</h2>
+    <p id="elasticity-sub" class="text-[12px] text-slate-500 mt-1">Fare vs days before departure</p>
+    <div id="elasticity-chart" class="h-[260px] mt-3"></div>
+    <p class="text-[12px] leading-relaxed text-slate-500 mt-2">T+30 and T+45 cheapest. T+1 spikes. This makes the index advance-purchase aware.</p>
+  </div>
+</section>
+
+<!-- BACKTEST — single divider family -->
+<section class="bg-white border border-slate-200 rounded-[20px] p-6 mt-6 reveal">
+  <div class="flex items-baseline justify-between">
+    <h2 class="text-[15px] font-semibold tracking-tight">Validation against DGCA</h2>
+    <span class="text-[11px] text-slate-500">Monthly backtest</span>
+  </div>
+  <div id="backtest-chart" class="h-[300px] mt-3"></div>
+  <div class="overflow-auto mt-4">
+    <table class="w-full text-[13px]">
+      <thead class="text-[11px] tracking-widest uppercase text-slate-500 border-b border-slate-200"><tr><th class="py-2 text-left font-semibold">Period</th><th class="py-2 text-right font-semibold">Faresight</th><th class="py-2 text-right font-semibold">DGCA avg</th><th class="py-2 text-right font-semibold">Deviation</th></tr></thead>
+      <tbody id="backtest-tbody"><tr><td colspan="4" class="py-6 text-center text-[13px] text-slate-500">Loading backtest</td></tr></tbody>
+    </table>
+  </div>
+</section>
+
+<footer class="py-8 text-center text-[12px] leading-relaxed text-slate-500 border-t border-slate-200 mt-8">Ministry of Statistics and Programme Implementation • SIH 2026 SIH26056 • Sources: IndiGo, Air India, Akasa, SpiceJet, MakeMyTrip, ixigo, Goibibo</footer>
 </main>
 
 <script>
 const ROUTES = {{ routes | tojson }};
 const WINDOWS = {{ windows | tojson }};
 const WINDOW_LABELS = {{ window_labels | tojson }};
-let state = { routeId: ROUTES[0]?.id || 'del-bom', window: 7, freq: 'daily', indexData: [], routePoints: [] };
+let state = { routeId: ROUTES[0]?.id ?? ROUTES[0]?.route_name ?? 'DEL-BOM', window: 7, freq: 'daily', indexData: [], routePoints: [] };
 const fmtINR = v => 'Rs ' + Number(v).toLocaleString('en-IN', {maximumFractionDigits:0});
 const fmtDate = s => { try{ return new Date(s).toLocaleDateString('en-IN',{day:'2-digit',month:'short'}) }catch{ return s } };
-function setActive(container, value){
-  [...container.children].forEach(c=> c.classList.toggle('!bg-slate-900', c.dataset.value===String(value)));
-  [...container.children].forEach(c=> c.classList.toggle('!text-white', c.dataset.value===String(value)));
-}
 function renderChips(){
   const sel=document.getElementById('route-select');
   if(sel){
     sel.innerHTML='';
     ROUTES.forEach(r=>{
       const o=document.createElement('option');
-      const label = r.route_name || (r.origin_code + ' → ' + r.destination_code) || r.name;
+      const label = r.route_name || (r.origin_code + ' → ' + r.destination_code) || r.name || String(r.id);
       o.value=String(r.id); o.textContent=label;
       if(String(r.id)===String(state.routeId)) o.selected=true;
       sel.appendChild(o);
@@ -198,7 +225,7 @@ function renderChips(){
   const uniqueWindows = [...new Set(WINDOWS)];
   uniqueWindows.forEach(w=>{
     const b=document.createElement('button');
-    b.dataset.value=String(w); b.className='px-3 py-1.5 rounded-full border border-slate-200 bg-white text-xs font-semibold hover:border-slate-300 transition '+(String(w)===String(state.window)?'!bg-slate-900 !text-white !border-slate-900':'');
+    b.dataset.value=String(w); b.className='px-3 py-1.5 rounded-full border text-[12px] font-medium transition '+(String(w)===String(state.window)?'bg-slate-900 text-white border-slate-900':'bg-white border-slate-200 text-slate-700 hover:border-slate-300');
     b.textContent=WINDOW_LABELS[w] || ('T+'+w);
     b.onclick=()=>{ state.window=w; renderChips(); updateAll(); };
     wc.appendChild(b);
@@ -211,7 +238,6 @@ document.getElementById('freq-seg').addEventListener('click', e=>{
   btn.classList.add('bg-slate-900','text-white'); btn.classList.remove('text-slate-600');
   loadIndex();
 });
-
 async function loadIndex(){
   try{
     const res=await fetch(`/api/index?frequency=${state.freq}`);
@@ -226,7 +252,7 @@ function renderIndex(failed){
   const delta=document.getElementById('idx-delta');
   const hero=document.getElementById('hero-index');
   if(failed || !state.indexData.length){
-    el.innerHTML='- <span class="text-base text-slate-500 font-normal">/ 100</span>'; sub.textContent='No index rows yet. Run the batch.'; delta.textContent='-'; return;
+    el.innerHTML='- <span class="text-base text-slate-500 font-normal">/ 100</span>'; sub.textContent='No index rows yet.'; delta.textContent='-'; return;
   }
   const last=state.indexData[state.indexData.length-1];
   const prev=state.indexData[state.indexData.length-2];
@@ -237,31 +263,31 @@ function renderIndex(failed){
   delta.textContent = (chg>=0? 'Up ' : 'Down ') + Math.abs(chg).toFixed(2) + ' (' + Math.abs(pct).toFixed(2) + '% vs prev)';
   delta.className = 'px-3 py-1.5 rounded-full border text-xs font-semibold ' + (chg<0 ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-emerald-50 border-emerald-200 text-emerald-800');
   sub.textContent = `${state.freq} • base ${last.base_period_ref} • ${last.route_count} routes • ${last.quote_count} quotes`;
-  document.getElementById('meta-routes').textContent = String(last.route_count);
-  document.getElementById('meta-quotes').textContent = String(last.quote_count);
+  document.getElementById('statIndex').textContent = Number(last.index_value).toFixed(2);
+  document.getElementById('statQuotes').textContent = String(last.quote_count);
   const x = state.indexData.map(d=>d.index_date);
   const y = state.indexData.map(d=> Number(d.index_value));
-  Plotly.newPlot('idx-spark', [{x,y, type:'scatter', mode:'lines', line:{color:'#0e4a7a',width:2}, fill:'tozeroy', fillcolor:'rgba(14,74,122,0.08)'}],
+  if(window.Plotly) Plotly.newPlot('idx-spark', [{x,y, type:'scatter', mode:'lines', line:{color:'#0e4a7a',width:2}, fill:'tozeroy', fillcolor:'rgba(14,74,122,0.08)'}],
     {margin:{l:6,r:6,t:6,b:18}, xaxis:{visible:false}, yaxis:{visible:false}, paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', displayModeBar:false}, {displayModeBar:false, staticPlot:true});
 }
 function renderMainChart(){
-  if(!state.indexData.length){ Plotly.newPlot('main-chart', [], {paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)'}); return; }
+  if(!state.indexData.length){ if(window.Plotly) Plotly.newPlot('main-chart', [], {paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)'}); return; }
   const x = state.indexData.map(d=>d.index_date);
   const y = state.indexData.map(d=> Number(d.index_value));
   const traceIdx = {x, y, name:'Faresight', type:'scatter', mode:'lines', line:{color:'#0f172a',width:2.2}};
   let data=[traceIdx];
-  let layout = {margin:{l:48,r:12,t:10,b:28}, paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', xaxis:{gridcolor:'#f1f5f9', tickfont:{size:11}}, yaxis:{gridcolor:'#f1f5f9', title:{text:'Index (base 100)', font:{size:11}}, tickfont:{size:11}}, legend:{orientation:'h', y:1.02, x:0, font:{size:11}}, font:{family:'DM Sans'}};
+  let layout = {margin:{l:48,r:12,t:10,b:28}, paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', xaxis:{gridcolor:'#f1f5f9', tickfont:{size:11}}, yaxis:{gridcolor:'#f1f5f9', title:{text:'Index (base 100)', font:{size:11}}, tickfont:{size:11}}, legend:{orientation:'h', y:1.02, x:0, font:{size:11}}, font:{family:'Geist'}};
   if(state.routePoints && state.routePoints.length){
     const rx = state.routePoints.map(p=>p.date);
     const ry = state.routePoints.map(p=> Number(p.median_fare));
-    data.push({x:rx, y:ry, name: (ROUTES.find(r=>r.id===state.routeId)?.name || state.routeId) + ' median fare', type:'scatter', mode:'lines', line:{color:'#0e4a7a', width:2}, yaxis:'y2'});
+    data.push({x:rx, y:ry, name: (ROUTES.find(r=>String(r.id)===String(state.routeId))?.route_name || state.routeId) + ' median', type:'scatter', mode:'lines', line:{color:'#0e4a7a', width:2}, yaxis:'y2'});
     layout.yaxis2={title:{text:'Median fare (Rs)', font:{size:11}}, overlaying:'y', side:'right', gridcolor:'rgba(0,0,0,0)', tickfont:{size:11}};
-    document.getElementById('trend-title').textContent='Index plus ' + (ROUTES.find(r=>r.id===state.routeId)?.name || '');
+    document.getElementById('trend-title').textContent='Index plus ' + (ROUTES.find(r=>String(r.id)===String(state.routeId))?.route_name || '');
   } else {
     document.getElementById('trend-title').textContent='Index trend';
   }
   document.getElementById('trend-sub').textContent= state.freq + ' • Base 100';
-  Plotly.newPlot('main-chart', data, layout, {displayModeBar:false, responsive:true});
+  if(window.Plotly) Plotly.newPlot('main-chart', data, layout, {displayModeBar:false, responsive:true});
 }
 async function loadRoute(){
   const wrap=document.getElementById('route-table-wrap');
@@ -275,7 +301,6 @@ async function loadRoute(){
     sub.textContent = `${j.route?.name || state.routeId} • ${j.label || 'T+'+state.window} • last ${points.length} points`;
     if(!points.length){
       wrap.classList.add('hidden'); empty.classList.remove('hidden');
-      empty.innerHTML=`No fare history for <b>${j.route?.name||state.routeId}</b> at <b>T+${state.window}</b> yet. The scraper runs daily. Try another window.`;
     } else {
       empty.classList.add('hidden'); wrap.classList.remove('hidden');
       document.getElementById('route-tbody').innerHTML = points.slice(-12).reverse().map(p=> `<tr><td class="py-2">${fmtDate(p.date)}</td><td class="py-2 text-right mono">${fmtINR(p.median_fare)}</td><td class="py-2 text-right mono">${p.quote_count}</td></tr>`).join('');
@@ -304,27 +329,27 @@ async function loadElasticity(){
   try{
     const res=await fetch(`/api/elasticity?route=${state.routeId}`);
     const data=await res.json();
-    document.getElementById('elasticity-sub').textContent = (ROUTES.find(r=>r.id===state.routeId)?.name || state.routeId) + ' • cheapest window highlighted';
-    if(!Array.isArray(data) || !data.length){ Plotly.newPlot('elasticity-chart', [], {paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', margin:{l:40,r:10,t:10,b:28}}); return; }
+    document.getElementById('elasticity-sub').textContent = (ROUTES.find(r=>String(r.id)===String(state.routeId))?.route_name || state.routeId) + ' • cheapest window highlighted';
+    if(!Array.isArray(data) || !data.length){ if(window.Plotly) Plotly.newPlot('elasticity-chart', [], {paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', margin:{l:40,r:10,t:10,b:28}}); return; }
     const x=data.map(d=>d.advance_purchase_days); const y=data.map(d=> Number(d.median_total_fare));
     const minIdx=y.indexOf(Math.min(...y));
     const colors=y.map((_,i)=> i===minIdx ? '#0e4a7a' : '#94a3b8');
-    Plotly.newPlot('elasticity-chart', [{x,y, type:'scatter', mode:'lines+markers', line:{color:'#0e4a7a', width:2}, marker:{color:colors, size:8, line:{color:'#fff',width:1}}}],
-      {margin:{l:48,r:12,t:10,b:28}, paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', xaxis:{gridcolor:'#f1f5f9', dtick:7, tickfont:{size:11}, title:{text:'Days before departure', font:{size:11}}}, yaxis:{gridcolor:'#f1f5f9', tickfont:{size:11}}, font:{family:'DM Sans'}}, {displayModeBar:false, responsive:true});
+    if(window.Plotly) Plotly.newPlot('elasticity-chart', [{x,y, type:'scatter', mode:'lines+markers', line:{color:'#0e4a7a', width:2}, marker:{color:colors, size:8, line:{color:'#fff',width:1}}}],
+      {margin:{l:48,r:12,t:10,b:28}, paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', xaxis:{gridcolor:'#f1f5f9', dtick:7, tickfont:{size:11}, title:{text:'Days before departure', font:{size:11}}}, yaxis:{gridcolor:'#f1f5f9', tickfont:{size:11}}, font:{family:'Geist'}}, {displayModeBar:false, responsive:true});
   }catch{}
 }
 async function loadBacktest(){
   try{
     const res=await fetch('/api/backtest'); const data=await res.json();
     const tb=document.getElementById('backtest-tbody');
-    if(!Array.isArray(data) || !data.length){ tb.innerHTML='<tr><td colspan="4" class="py-6 text-center text-sm text-slate-500">No backtest rows yet. DGCA comparison appears after a month of data.</td></tr>'; return; }
+    if(!Array.isArray(data) || !data.length){ tb.innerHTML='<tr><td colspan="4" class="py-6 text-center text-sm text-slate-500">No backtest rows yet.</td></tr>'; return; }
     tb.innerHTML = data.map(r=> `<tr><td class="py-2">${r.period}</td><td class="py-2 text-right mono">${Number(r.apix_value).toFixed(2)}</td><td class="py-2 text-right mono">${fmtINR(r.dgca_avg_fare)}</td><td class="py-2 text-right mono" style="color:${Math.abs(r.pct_deviation)>5 ? '#9a3412' : '#0e4a7a'}">${Number(r.pct_deviation).toFixed(2)}%</td></tr>`).join('');
     const x=data.map(d=>d.period); const y1=data.map(d=> Number(d.apix_value)); const y2=data.map(d=> Number(d.dgca_avg_fare));
     const base=y2[0]||1; const y2n=y2.map(v=> v/base*100);
-    Plotly.newPlot('backtest-chart', [
+    if(window.Plotly) Plotly.newPlot('backtest-chart', [
       {x, y:y1, name:'Faresight (base 100)', type:'scatter', mode:'lines', line:{color:'#0f172a',width:2.2}},
       {x, y:y2n, name:'DGCA (re based to 100)', type:'scatter', mode:'lines', line:{color:'#0e4a7a', width:2, dash:'dash'}},
-    ], {margin:{l:48,r:12,t:10,b:28}, paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', xaxis:{gridcolor:'#f1f5f9', tickfont:{size:11}}, yaxis:{gridcolor:'#f1f5f9', title:{text:'Index', font:{size:11}}, tickfont:{size:11}}, legend:{orientation:'h', y:1.02, x:0, font:{size:11}}, font:{family:'DM Sans'}}, {displayModeBar:false, responsive:true});
+    ], {margin:{l:48,r:12,t:10,b:28}, paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', xaxis:{gridcolor:'#f1f5f9', tickfont:{size:11}}, yaxis:{gridcolor:'#f1f5f9', title:{text:'Index', font:{size:11}}, tickfont:{size:11}}, legend:{orientation:'h', y:1.02, x:0, font:{size:11}}, font:{family:'Geist'}}, {displayModeBar:false, responsive:true});
   }catch{}
 }
 function downloadCSV(filename, rows, headers){
@@ -335,18 +360,17 @@ function downloadCSV(filename, rows, headers){
 document.getElementById('btn-csv-main').onclick=()=>{ if(!state.indexData.length) return; downloadCSV(`faresight-index-${state.freq}.csv`, state.indexData, ['index_date','frequency','index_value','base_period_ref','route_count','quote_count']); };
 document.getElementById('btn-csv-route').onclick=()=>{ if(!state.routePoints.length) return; downloadCSV(`faresight-${state.routeId}-T${state.window}.csv`, state.routePoints, ['date','median_fare','quote_count']); };
 document.getElementById('btn-compare').onclick=async()=>{
-  const a=state.routeId; const b=ROUTES.find(r=>r.id!==a)?.id || ROUTES[1]?.id;
+  const a=state.routeId; const b=ROUTES.find(r=>String(r.id)!==String(a))?.id || ROUTES[1]?.id;
   if(!b) return;
   const res=await fetch(`/api/comparison?routes=${a},${b}&window=${state.window}`);
   const j=await res.json();
-  if(!j.results?.length) return alert('Not enough data to compare yet. Need two routes with history.');
+  if(!j.results?.length) return alert('Not enough data to compare yet.');
   const msg=j.results.map(r=> `${r.route}: avg ${fmtINR(r.avg_fare)} (min ${fmtINR(r.min_fare)} to max ${fmtINR(r.max_fare)})`).join('\n');
   alert(`Comparison - ${j.label}\n\n${msg}`);
 };
 const io=new IntersectionObserver(ents=>{ ents.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('in') })},{threshold:0.15});
 document.querySelectorAll('.reveal').forEach(el=> io.observe(el));
 if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) document.querySelectorAll('.reveal').forEach(el=> el.classList.add('in'));
-
 renderChips();
 loadIndex();
 loadRoute();
