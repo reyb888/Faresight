@@ -77,7 +77,7 @@ async def admin_auth(request: Request):
     from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
     security = HTTPBasic()
-    credentials = security(request)
+    credentials = await security(request)
     if credentials.username == ADMIN_USERNAME and credentials.password == ADMIN_PASSWORD:
         return True
     return False
