@@ -105,22 +105,6 @@ class IndexRequest(BaseModel):
 @app.on_event("startup")
 async def startup():
     init_db()
-    # On ephemeral hosts (e.g. Vercel /tmp SQLite) the DB starts empty on
-    # every cold start — seed the 60-day baseline so the dashboard never
-    # renders blank. Non-fatal: any failure just logs and continues.
-    try:
-        from database import SessionLocal as _SessionLocal, get_record_count as _count
-        _db = _SessionLocal()
-        try:
-            _empty = _count(_db).get("total", 0) == 0
-        finally:
-            _db.close()
-        if _empty:
-            from seeder import seed_historical_data
-            _res = seed_historical_data(days_back=60)
-            logger.info("Baseline auto-seed: %s", _res.get("message", _res))
-    except Exception as e:
-        logger.warning("Baseline auto-seed skipped: %s", e)
     logger.info("Faresight API started — database initialized")
 
 

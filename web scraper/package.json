@@ -1,0 +1,19 @@
+{
+  "name": "faresight-crawler",
+  "version": "1.0.0",
+  "description": "Faresight Web Scraper — custom Crawlee fork for SIH26056 airfare index",
+  "type": "module",
+  "main": "faresight_crawler.js",
+  "scripts": {
+    "crawl": "node scraper.js",
+    "crawl:routes": "node scraper.js --routes DEL-BOM,BLR-DEL,MAA-DEL,CCU-BOM,HYD-DEL"
+  },
+  "dependencies": {
+    "crawlee": "^3.12.0",
+    "playwright": "^1.48.0",
+    "httpx": "^0.1.0"
+  },
+  "keywords": ["crawlee", "faresight", "sih26056", "airfare", "scraper"],
+  "author": "Faresight SIH26056",
+  "license": "MIT"
+}
