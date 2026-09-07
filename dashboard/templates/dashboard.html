@@ -97,7 +97,7 @@
   <section class="sticky top-[64px] z-30 bg-[#fcfdf8]/90 backdrop-blur border border-slate-200 rounded-2xl p-4 mt-6 flex flex-wrap gap-4 items-center justify-between reveal">
     <div class="flex-1 min-w-[220px]">
       <div class="text-xs font-semibold tracking-widest uppercase text-slate-500 mb-2">Route</div>
-      <div id="route-chips" class="flex flex-wrap gap-2"></div>
+      <select id="route-select" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-300"></select>
     </div>
     <div class="flex-1 min-w-[220px]">
       <div class="text-xs font-semibold tracking-widest uppercase text-slate-500 mb-2">Advance purchase window</div>
@@ -183,21 +183,24 @@ function setActive(container, value){
   [...container.children].forEach(c=> c.classList.toggle('!text-white', c.dataset.value===String(value)));
 }
 function renderChips(){
-  const rc=document.getElementById('route-chips'); rc.innerHTML='';
-  ROUTES.forEach(r=>{
-    const b=document.createElement('button');
-    b.dataset.value=r.id; b.className='px-3 py-1.5 rounded-full border border-slate-200 bg-white text-xs font-semibold hover:border-slate-300 transition '+(r.id===state.routeId?'!bg-slate-900 !text-white !border-slate-900':'');
-    b.textContent=r.name; b.title=r.traffic;
-    b.onclick=()=>{ state.routeId=r.id; renderChips(); updateAll(); };
-    rc.appendChild(b);
-  });
+  const sel=document.getElementById('route-select');
+  if(sel){
+    sel.innerHTML='';
+    ROUTES.forEach(r=>{
+      const o=document.createElement('option');
+      const label = r.route_name || (r.origin_code + ' → ' + r.destination_code) || r.name;
+      o.value=String(r.id); o.textContent=label;
+      if(String(r.id)===String(state.routeId)) o.selected=true;
+      sel.appendChild(o);
+    });
+    sel.onchange=(e)=>{ state.routeId=isNaN(Number(e.target.value))?e.target.value:Number(e.target.value); renderChips(); updateAll(); };
+  }
   const wc=document.getElementById('window-chips'); wc.innerHTML='';
-  // deduplicate WINDOWS array in case of duplicates
   const uniqueWindows = [...new Set(WINDOWS)];
   uniqueWindows.forEach(w=>{
     const b=document.createElement('button');
-    b.dataset.value=String(w); b.className='px-3 py-1.5 rounded-full border border-slate-200 bg-white text-xs font-semibold hover:border-slate-300 transition '+(w===state.window?'!bg-slate-900 !text-white !border-slate-900':'');
-    b.textContent='T+'+w+' '+WINDOW_LABELS[w];
+    b.dataset.value=String(w); b.className='px-3 py-1.5 rounded-full border border-slate-200 bg-white text-xs font-semibold hover:border-slate-300 transition '+(String(w)===String(state.window)?'!bg-slate-900 !text-white !border-slate-900':'');
+    b.textContent=WINDOW_LABELS[w] || ('T+'+w);
     b.onclick=()=>{ state.window=w; renderChips(); updateAll(); };
     wc.appendChild(b);
   });
