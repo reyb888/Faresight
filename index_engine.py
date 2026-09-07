@@ -191,41 +191,32 @@ def compute_index(
             elif short_index is not None:
                 composite = short_index
 
-        # Upsert the index row
-        index_row = {
-            "date": capture_date,
-            "short_term_index": short_index,
-            "medium_term_index": medium_index,
-            "long_term_index": long_index,
-            "composite_index": composite,
-            "created_at": datetime.utcnow().isoformat(),
-        }
+        # Upsert the index row (ORM — matches the AirfareIndices model columns)
+        from sqlalchemy import func as _func
 
-        # Use raw SQL upsert
-        from sqlalchemy import text
-        date_val = capture_date
-
-        session.execute(
-            text(
-                """INSERT INTO airfare_indices
-                   (date, short_term_index, medium_term_index, long_term_index, composite_index, created_at)
-                   VALUES (:date, :short_term_index, :medium_term_index, :long_term_index, :composite_index, :created_at)
-                   ON CONFLICT(date) DO UPDATE SET
-                       short_term_index = EXCLUDED.short_term_index,
-                       medium_term_index = EXCLUDED.medium_term_index,
-                       long_term_index = EXCLUDED.long_term_index,
-                       composite_index = EXCLUDED.composite_index,
-                       created_at = EXCLUDED.created_at"""
-            ),
-            {
-                "date": date_val,
-                "short_term_index": short_index,
-                "medium_term_index": medium_index,
-                "long_term_index": long_index,
-                "composite_index": composite,
-                "created_at": datetime.utcnow().isoformat(),
-            },
+        now = datetime.utcnow()
+        existing = (
+            session.query(AirfareIndices)
+            .filter(_func.date(AirfareIndices.calculated_at) == capture_date)
+            .order_by(AirfareIndices.calculated_at.desc())
+            .first()
         )
+        if existing is None:
+            session.add(
+                AirfareIndices(
+                    calculated_at=now,
+                    short_term_index=short_index,
+                    medium_term_index=medium_index,
+                    long_term_index=long_index,
+                    composite_index=composite,
+                )
+            )
+        else:
+            existing.calculated_at = now
+            existing.short_term_index = short_index
+            existing.medium_term_index = medium_index
+            existing.long_term_index = long_index
+            existing.composite_index = composite
         session.commit()
 
         summary = {
