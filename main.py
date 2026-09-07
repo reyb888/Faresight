@@ -229,11 +229,12 @@ async def api_public_indices(
 
 @app.post("/admin/trigger-live-fetch")
 async def admin_trigger_live_fetch(
+    background_tasks: BackgroundTasks,
     request: Request,
     route: str = "DEL-BOM",
     db=Depends(get_db),
 ):
-    """Trigger live SerpApi fetch (Admin protected)."""
+    """Trigger live SerpApi fetch (Admin protected) - runs in background."""
 
     # Auth check
     auth_ok = await admin_auth(request)
@@ -241,37 +242,71 @@ async def admin_trigger_live_fetch(
         raise HTTPException(status_code=401, detail="Unauthorized - Admin credentials required")
 
     # Parse route
-    # route codes: DEL-BOM, BLR-DEL, MAA-DEL, CCU-BOM, HYD-DEL
     route_parts = route.split("-")
     if len(route_parts) == 2:
         origin_code, dest_code = route_parts[0], route_parts[1]
     else:
         origin_code, dest_code = "DEL", "BOM"
 
-    try:
-        # Run the async fetch with timeout
-        result = await asyncio.wait_for(
-            fetch_live_route(origin_code, dest_code, lead_times=LEAD_TIMES),
-            timeout=6.0,
-        )
+    logger.info(f"Triggering live fetch for {origin_code}-{dest_code}")
 
-        # Compute index after live fetch
+    # Queue the scraping in background - returns immediately
+    background_tasks.add_task(
+        _run_live_fetch_background,
+        origin_code,
+        dest_code,
+    )
+
+    logger.info(f"Live fetch queued for {origin_code}-{dest_code}")
+
+    return {
+        "status": "accepted",
+        "message": f"Live fetch queued for {origin_code}-{dest_code}. Check /admin/status for progress.",
+        "triggered_route": f"{origin_code}-{dest_code}",
+        "timestamp": datetime.utcnow().isoformat(),
+    }
+
+
+async def _run_live_fetch_background(origin_code: str, dest_code: str):
+    """Background task to fetch live fares and update index."""
+    from database import SessionLocal, PipelineStatus, SystemLogs, init_db, insert_airfare_records, get_route_id_by_codes
+    from index_engine import compute_index
+
+    logger.info(f"Starting background live fetch for {origin_code}-{dest_code}")
+    init_db()
+    session = SessionLocal()
+    try:
+        # Log start
+        log_entry = SystemLogs(
+            log_level="INFO",
+            message=f"Background live fetch started for {origin_code}-{dest_code}",
+        )
+        session.add(log_entry)
+        session.commit()
+
+        # Fetch live data
+        result = await fetch_live_route(origin_code, dest_code, lead_times=LEAD_TIMES)
+        
+        # Store results
+        if result:
+            for rec in result:
+                if rec.get("route_id") is None:
+                    rid = get_route_id_by_codes(origin_code, dest_code)
+                    rec["route_id"] = rid
+            insert_airfare_records(SessionLocal(), result)
+
+        # Compute index
         index_result = compute_index(force_recompute=True)
 
         # Update pipeline status
-        from database import PipelineStatus, SystemLogs, init_db
-        init_db()
         session = SessionLocal()
         try:
-            # Log the live fetch event
             log_entry = SystemLogs(
                 log_level="INFO",
-                message=f"Live SerpApi fetch triggered for {origin_code}->{dest_code}, "
-                        f"records: {len(result)}, prices found: {sum(1 for r in result if r.get('price'))}",
+                message=f"Live fetch completed for {origin_code}-{dest_code}, records: {len(result)}, prices: {sum(1 for r in result if r.get('price'))}",
             )
             session.add(log_entry)
 
-            # Update pipeline status
             status_row = (
                 session.query(PipelineStatus)
                 .order_by(PipelineStatus.id.desc())
@@ -280,8 +315,7 @@ async def admin_trigger_live_fetch(
             if status_row is None:
                 status_row = PipelineStatus()
             status_row.last_run_timestamp = datetime.utcnow()
-            status_row.records_fetched = len(result)
-            status_row.active_key_index = 0  # Will be updated by fetcher
+            status_row.records_fetched = len(result) if result else 0
             status_row.status_message = "Live fetch completed"
             session.add(status_row)
             session.commit()
@@ -291,37 +325,19 @@ async def admin_trigger_live_fetch(
         finally:
             session.close()
 
-        return {
-            "status": "ok",
-            "triggered_route": f"{origin_code}-{dest_code}",
-            "records_fetched": len(result),
-            "live_entries": [
-                {
-                    "lead_time": r["lead_time_days"],
-                    "airline": r.get("airline_name"),
-                    "price": r.get("price"),
-                    "source": r.get("data_source"),
-                }
-                for r in result
-            ],
-            "index": index_result,
-            "timestamp": datetime.utcnow().isoformat(),
-        }
-
-    except asyncio.TimeoutError:
-        # Fallback to cached data when SerpApi times out
-        return {
-            "status": "timeout_fallback",
-            "triggered_route": f"{origin_code}-{dest_code}",
-            "message": "SerpApi request timed out after 4 seconds. "
-                        "Returning cached SQLite data to maintain UI performance.",
-            "timestamp": datetime.utcnow().isoformat(),
-        }
-    except HTTPException:
-        raise
     except Exception as e:
-        logger.exception("Admin live fetch failed")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception(f"Background live fetch failed for {origin_code}-{dest_code}: {e}")
+        # Log error
+        session = SessionLocal()
+        try:
+            log_entry = SystemLogs(
+                log_level="ERROR",
+                message=f"Background live fetch failed for {origin_code}-{dest_code}: {e}",
+            )
+            session.add(log_entry)
+            session.commit()
+        finally:
+            session.close()
 
 
 @app.get("/admin/status")
