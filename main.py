@@ -269,7 +269,8 @@ async def admin_trigger_live_fetch(
 
 async def _run_live_fetch_background(origin_code: str, dest_code: str):
     """Background task to fetch live fares and update index."""
-    from database import SessionLocal, PipelineStatus, SystemLogs, init_db, insert_airfare_records, get_route_id_by_codes
+    from database import SessionLocal, PipelineStatus, SystemLogs, init_db, insert_airfare_records
+    from fetcher import get_route_id_by_codes
     from index_engine import compute_index
 
     logger.info(f"Starting background live fetch for {origin_code}-{dest_code}")
