@@ -10,6 +10,7 @@ from database import (
     SessionLocal,
     AirfareRecords,
     Routes,
+    AirfareIndices,
     and_,
 )
 
@@ -118,24 +119,24 @@ def compute_index(
         latest = get_latest_index.__func__(session) if hasattr(get_latest_index, "__func__") else None
         # Check if index already computed for today
         if latest and not force_recompute:
-            row = (
-                session.query(type('RecentIndex', (), {'id': latest['id'], 'short_term_index': latest['short_term_index'],
-                                                       'medium_term_index': latest['medium_term_index'],
-                                                       'long_term_index': latest['long_term_index'],
-                                                       'composite_index': latest['composite_index']}))
-                .filter_by()
-                .first()
-            )
-            # Simpler check: just return existing
-            pass
+            row = session.query(AirfareIndices).filter_by(id=latest['id']).first()
+            if row:
+                return {
+                    "computed": False,
+                    "reason": "Latest index already exists for today. Use force_recompute=True to override.",
+                    "index": {
+                        "short_term_index": row.short_term_index,
+                        "medium_term_index": row.medium_term_index,
+                        "long_term_index": row.long_term_index,
+                        "composite_index": row.composite_index,
+                    },
+                }
 
         # Actually, let's query the DB directly
-        from sqlalchemy import desc
-        row = (
-            session.query(type('TempIndex', (), {})
-            .from_statement(f"SELECT * FROM airfare_indices WHERE calculated_at >= date('{capture_date}') ORDER BY calculated_at DESC LIMIT 1")
-            .first()
-        )
+        from sqlalchemy import desc, text
+        row = session.query(AirfareIndices).filter(
+            AirfareIndices.calculated_at >= capture_date
+        ).order_by(desc(AirfareIndices.calculated_at)).limit(1).first()
 
         # Simpler approach: just always compute and upsert
         buckets = get_prices_by_lead_time_bucket(session=session, capture_date=capture_date)

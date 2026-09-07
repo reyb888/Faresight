@@ -1,35 +1,25 @@
-# Render Blueprint — API Web Service only.
-# Cron scraping is handled by GitHub Actions (free tier).
-# Docs: https://render.com/docs/blueprint-spec
-
-services:
-  # --- Backend API (Free Web Service) ---
-  - type: web
-    name: apix-api
-    runtime: python
-    plan: free
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "uvicorn api.main:app --host 0.0.0.0 --port $PORT"
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.9
-      - key: DATABASE_URL
-        sync: false
-      - key: DATABASE_URL_SYNC
-        sync: false
-      - key: API_KEYS
-        sync: false
-      - key: CORS_ALLOWED_ORIGINS
-        sync: false
-      - key: SERPAPI_KEY
-        sync: false
-      - key: APIX_BASE_PERIOD
-        sync: false
-      - key: SCRAPE_USER_AGENT
-        sync: false
-      - key: SCRAPE_MIN_DELAY_SECONDS
-        sync: false
-      - key: SCRAPE_ROBOTSTXT_OBEY
-        sync: false
-      - key: RENDER_CRON_SCHEDULE
-        sync: false
+[build]
+  command = "pip install -r requirements.txt && python -m playwright install chromium"
+[start]
+  command = "python -m uvicorn main:app --host 0.0.0.0 --port $PORT"
+[env]
+  PYTHON_VERSION = "3.12"
+  SERP_API_KEY_1 = "your_first_serpapi_key_here"
+  SERP_API_KEY_2 = "your_second_serpapi_key_here"
+  SERP_API_KEY_3 = "your_third_serpapi_key_here"
+  SERP_API_KEY_4 = "your_fourth_serpapi_key_here"
+  SERP_API_KEY_5 = "your_fifth_serpapi_key_here"
+  DATABASE_URL = "postgresql+asyncpg://postgres.ladhxsgrucuunsdorfdf:Reyansh%40008@aws-0-ap-northeast-1.pooler.supabase.com:5432/postgres"
+  DATABASE_URL_SYNC = "postgresql://postgres.ladhxsgrucuunsdorfdf:Reyansh%40008@aws-0-ap-northeast-1.pooler.supabase.com:5432/postgres"
+  SERP_API_KEYS = "key1,key2,key3,key4,key5"
+  AIRFARE_DB_PATH = "./airfare.db"
+  ADMIN_USERNAME = "admin"
+  ADMIN_PASSWORD = "sih2026admin"
+  HOST = "0.0.0.0"
+  PORT = "10000"
+  DEBUG = "false"
+  SERPAPI_TIMEOUT = "4.0"
+  SERPAPI_MAX_RETRIES = "2"
+  SERPAPI_FALLBACK_TO_CACHE = "true"
+  API_V1_PREFIX = "/api/v1"
+  CORS_ALLOWED_ORIGINS = "https://faresight-sih.vercel.app"

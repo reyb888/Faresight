@@ -48,7 +48,8 @@ app.add_middleware(
 )
 
 # Template directory for HTML rendering
-templates = Jinja2Templates(directory="dashboard/templates")
+TEMPLATE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dashboard/templates")
+templates = Jinja2Templates(directory=TEMPLATE_DIR)
 
 # ---------------------------------------------------------------------------
 # Dependency: get DB session
@@ -133,7 +134,7 @@ async def api_routes(db=Depends(get_db)):
     routes = db_get_all_routes(db)
     return {
         "routes": [
-            {"id": r.id, "origin_code": r.origin_code, "destination_code": r.destination_code, "route_name": r.route_name}
+            {"id": r["id"], "origin_code": r["origin_code"], "destination_code": r["destination_code"], "route_name": r["route_name"]}
             for r in routes
         ],
         "lead_times": [{"days": lt, "label": f"T+{lt}"} for lt in LEAD_TIMES],
@@ -377,32 +378,41 @@ async def admin_status(db=Depends(get_db)):
 @app.get("/", include_in_schema=False)
 async def public_dashboard(request: Request):
     """Public Statistical Dashboard."""
-    # Get latest index data for badge
-    from database import SessionLocal, get_latest_index, get_indices
+    from database import SessionLocal, get_latest_index, get_indices, get_all_routes
+    import traceback
 
     session = SessionLocal()
     try:
         latest = db_get_latest_index(session)
         indices = get_indices(session, limit=30)
         record_count = get_record_count(session)
+        routes = db_get_all_routes(session)
 
-        # Compute data freshness
-        last_sync = None
-        if latest and latest.get("calculated_at"):
-            last_sync = latest["calculated_at"]
+        # Build window labels
+        window_labels = {lt: f"T+{lt}" for lt in LEAD_TIMES}
+        window_labels.update({1: "Tomorrow", 7: "In 1 week", 15: "In 2 weeks", 30: "In 1 month", 45: "In 45 days"})
 
-        return templates.TemplateResponse(
-            "dashboard.html",
-            {
-                "request": request,
-                "title": "Faresight - Airfare Price Index",
-                "data_freshness": last_sync,
-                "composite_index": latest.get("composite_index") if latest else None,
-                "index_history": indices,
-                "lead_times": LEAD_TIMES,
-                "index_weights": INDEX_WEIGHTS,
-                "record_count": record_count,
-            },
+        # Render template manually to avoid TemplateResponse issues
+        template = templates.get_template("dashboard.html")
+        html_content = template.render(
+            request=request,
+            title="Faresight - Airfare Price Index",
+            data_freshness=latest.get("calculated_at") if latest else None,
+            composite_index=latest.get("composite_index") if latest else None,
+            index_history=indices or [],
+            lead_times=LEAD_TIMES,
+            index_weights=INDEX_WEIGHTS,
+            record_count=record_count.get("total", 0) if record_count else 0,
+            routes=routes,
+            windows=LEAD_TIMES,
+            window_labels={lt: f"T+{lt}" for lt in LEAD_TIMES},
+        )
+        return HTMLResponse(content=html_content)
+    except Exception as e:
+        logger.error(f"Dashboard error: {e}\n{traceback.format_exc()}")
+        return JSONResponse(
+            status_code=500,
+            content={"error": str(e), "traceback": traceback.format_exc()}
         )
     finally:
         session.close()
@@ -412,14 +422,15 @@ async def public_dashboard(request: Request):
 async def admin_dashboard(request: Request):
     """Protected Admin Operations Panel."""
     from fastapi.security import HTTPBasic
+    from fastapi.responses import Response
 
     # Check auth
     security = HTTPBasic()
-    credentials = security(request)
+    credentials = await security(request)
 
     if credentials.username != ADMIN_USERNAME or credentials.password != ADMIN_PASSWORD:
         # Return 401 with WWW-Authenticate header
-        return HTTPResponse(
+        return Response(
             status_code=401,
             headers={"WWW-Authenticate": "Basic login required"},
             content="Admin authentication required",
@@ -448,6 +459,17 @@ async def admin_dashboard(request: Request):
         # Get recent index
         latest_index = db_get_latest_index(session)
 
+        # Convert latest_index to dict if it exists
+        latest_index_data = None
+        if latest_index:
+            latest_index_data = {
+                "calculated_at": latest_index.calculated_at.isoformat() if latest_index.calculated_at else None,
+                "short_term_index": latest_index.short_term_index,
+                "medium_term_index": latest_index.medium_term_index,
+                "long_term_index": latest_index.long_term_index,
+                "composite_index": latest_index.composite_index,
+            }
+
         return templates.TemplateResponse(
             "admin_dashboard.html",
             {
@@ -469,8 +491,8 @@ async def admin_dashboard(request: Request):
                     }
                     for l in logs
                 ],
-                "record_count": record_count,
-                "latest_index": latest_index,
+                "record_count": record_count.get("total", 0) if record_count else 0,
+                "latest_index": latest_index_data,
                 "serp_keys": SERP_API_KEYS if SERP_API_KEYS else [],
                 "lead_times": LEAD_TIMES,
                 "index_weights": INDEX_WEIGHTS,
@@ -499,10 +521,10 @@ async def api_index_proxy(frequency: str = "daily", db=Depends(get_db)):
     """Proxy for /api/index expected by dashboard.html."""
     result = await api_airfare_index(since=None, limit=365, db=db)
     # Dashboard expects: { index_value, base_period_ref, route_count, quote_count }
-    latest = result.get("latest", {})
+    latest = result.get("latest") or {}
     return {
-        "index_value": latest.get("composite_index", 0.0),
-        "base_period_ref": latest.get("calculated_at", "base period"),
+        "index_value": latest.get("composite_index", 0.0) if latest else 0.0,
+        "base_period_ref": latest.get("calculated_at", "base period") if latest else "base period",
         "route_count": result.get("record_count", {}).get("total", 0),
         "quote_count": sum(
             len(buckets.get("short", []) or [])
@@ -519,11 +541,11 @@ async def api_heatmap_proxy(db=Depends(get_db)):
     result = await api_heatmap(capture_date=None, db=db)
     # Dashboard expects array of cells with origin, destination, advance_purchase_days, median_total_fare
     cells = []
-    buckets = result.get("buckets", {})
+    buckets = result.get("buckets") or {}
     # Generate sample cells from available data
     route_codes = [("DEL", "BOM"), ("BLR", "DEL"), ("MAA", "DEL"), ("CCU", "BOM"), ("HYD", "DEL")]
     for i, (orig, dest) in enumerate(route_codes):
-        prices = buckets.get("short", []) + buckets.get("medium", []) + buckets.get("long", [])
+        prices = (buckets.get("short") or []) + (buckets.get("medium") or []) + (buckets.get("long") or [])
         price = prices[i] if i < len(prices) else 0
         cells.append({
             "origin": orig,
@@ -543,8 +565,8 @@ async def api_backtest_proxy(db=Depends(get_db)):
         return []
     return [
         {
-            "period": idx.get("calculated_at", "N/A")[:7],
-            "apix_value": idx.get("composite_index", 0.0) or 0.0,
+            "period": idx.get("calculated_at", "N/A")[:7] if idx.get("calculated_at") else "N/A",
+            "apix_value": idx.get("composite_index", 0.0) if idx else 0.0,
             "dgca_avg_fare": 0.0,  # Would need DGCA data
             "pct_deviation": 0.0,
         }
@@ -597,7 +619,7 @@ async def api_routes_proxy(db=Depends(get_db)):
     routes = db_get_all_routes(db)
     return {
         "routes": [
-            {"id": r.id, "name": r.route_name, "origin": r.origin_code, "destination": r.destination_code}
+            {"id": r["id"], "name": r["route_name"], "origin": r["origin_code"], "destination": r["destination_code"]}
             for r in routes
         ],
         "windows": [1, 3, 5, 7, 15, 30, 45],
@@ -636,7 +658,8 @@ async def api_route_data_proxy(route: str = "DEL-BOM", window: int = 7, db=Depen
     for lt in windows:
         rec = next((p for p in route_prices if p.get("lead_time_days") == lt), None)
         fare = rec.get("price") if rec else 0
-        points.append({"date": rec.get("capture_date", date.today().isoformat()), "median_fare": fare, "quote_count": rec.get("price") is not None})
+        capture_date = rec.get("capture_date", date.today().isoformat()) if rec else date.today().isoformat()
+        points.append({"date": capture_date, "median_fare": fare, "quote_count": rec.get("price") is not None if rec else False})
     
     return {"route": {"name": f"{origin} → {dest}"}, "window": window, "label": f"T+{window}", "points": points}
 
