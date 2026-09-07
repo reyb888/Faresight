@@ -39,21 +39,27 @@ POSTGRES_URL = os.environ.get("DATABASE_URL", "")
 POSTGRES_SYNC_URL = os.environ.get("DATABASE_URL_SYNC", "")
 
 # Detect if we should use PostgreSQL or SQLite.
-# On Vercel serverless the filesystem is read-only except /tmp and there is
-# no persistent disk, so always use an ephemeral SQLite DB there and ignore
-# any stale DATABASE_URL env vars. (Supabase hangs on cold start - use
-# SQLite for fast demo, sync to Supabase via Render cron later.)
-if os.environ.get("VERCEL") == "1":
+# Prefer Supabase when DATABASE_URL is set — persistent across Vercel
+# invocations so live SerpApi inserts survive cold starts (fix for 0 fetches
+# for today / stale Faresight Daily). Fall back to ephemeral /tmp SQLite only
+# when no Postgres URL is configured.
+if POSTGRES_SYNC_URL and POSTGRES_SYNC_URL.startswith("postgresql"):
+    _USE_SUPABASE = True
+    _engine = create_engine(
+        POSTGRES_SYNC_URL, echo=False, future=True,
+        pool_pre_ping=True, pool_recycle=300, connect_args={"connect_timeout": 5, "options": "-c statement_timeout=8000"},
+    )
+elif POSTGRES_URL and POSTGRES_URL.startswith("postgresql"):
+    _USE_SUPABASE = True
+    _engine = create_engine(
+        POSTGRES_URL, echo=False, future=True,
+        pool_pre_ping=True, pool_recycle=300, connect_args={"connect_timeout": 5, "options": "-c statement_timeout=8000"},
+    )
+elif os.environ.get("VERCEL") == "1":
     DB_PATH = "/tmp/airfare.db"
     SQLITE_URL = f"sqlite:///{DB_PATH}"
     _USE_SUPABASE = False
     _engine = create_engine(SQLITE_URL, echo=False, connect_args={"check_same_thread": False})
-elif POSTGRES_SYNC_URL and POSTGRES_SYNC_URL.startswith("postgresql"):
-    _USE_SUPABASE = True
-    _engine = create_engine(POSTGRES_SYNC_URL, echo=False, future=True)
-elif POSTGRES_URL and POSTGRES_URL.startswith("postgresql"):
-    _USE_SUPABASE = True
-    _engine = create_engine(POSTGRES_URL, echo=False, future=True)
 else:
     _USE_SUPABASE = False
     _engine = create_engine(SQLITE_URL, echo=False, connect_args={"check_same_thread": False})
