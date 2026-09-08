@@ -375,6 +375,7 @@ html{scroll-behavior:smooth}
     <p class="mt-4 text-[16px] leading-relaxed text-zinc-600 max-w-[48ch]">DGCA averages arrive two months late. Faresight scrapes airlines and OTAs daily, publishing a Base 100 index weighted by traffic.</p>
     <div class="mt-7 flex flex-wrap gap-3">
       <a href="#index-panel" class="inline-flex items-center gap-1.5 px-5 py-3 rounded-full bg-zinc-900 text-white text-[13.5px] font-semibold hover:bg-zinc-800 hover:-translate-y-[1px] active:scale-[0.98] transition">View live index <i class="ph ph-arrow-up-right text-[14px]"></i></a>
+      <a href="/docs" class="inline-flex items-center px-5 py-3 rounded-full bg-white border border-zinc-200 text-[13.5px] font-semibold hover:border-zinc-300 hover:-translate-y-[1px] active:scale-[0.98] transition">Explore API</a>
     </div>
   </div>
   <div class="lg:col-span-6 relative">
