@@ -1,0 +1,100 @@
+# Environment variables (secrets and configurations)
+.env
+.env.local
+.env.*.local
+
+# Python bytecode & cache files
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Distribution / packaging
+bin/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+ENV/
+env.bak/
+venv.bak/
+
+# Testing & Coverage
+.tox/
+.nosenv/
+.htmlcov/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+
+# Editors & IDEs
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Vercel
+.vercel
+
+# Node.js dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# SQLite databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Crawler / scraper artifacts
+web scraper/storage/
+web scraper/*.log
+
+# Local database files
+airfare.db
+demo_airfare.db
+*.db-journal
+
+# Backup / temp files
+*.bak
+*_old.*
+*_backup.*
+*_copy.*
+*.tmp
+*.temp
+*.cache
+
+# OS files
+Thumbs.db
+desktop.ini

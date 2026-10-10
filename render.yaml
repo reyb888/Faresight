@@ -1,0 +1,27 @@
+[build]
+  command = "pip install -r requirements.txt && python -m playwright install chromium"
+[start]
+  command = "python -m uvicorn main:app --host 0.0.0.0 --port $PORT"
+[env]
+  PYTHON_VERSION = "3.12"
+  SERP_API_KEY_1 = "your_first_serpapi_key_here"
+  SERP_API_KEY_2 = "your_second_serpapi_key_here"
+  SERP_API_KEY_3 = "your_third_serpapi_key_here"
+  SERP_API_KEY_4 = "your_fourth_serpapi_key_here"
+  SERP_API_KEY_5 = "your_fifth_serpapi_key_here"
+  # Secrets: set DATABASE_URL / DATABASE_URL_SYNC / SERP_API_KEYS / ADMIN_PASSWORD
+  # as encrypted Render env vars in the dashboard. Never commit real values here.
+  DATABASE_URL = ""
+  DATABASE_URL_SYNC = ""
+  SERP_API_KEYS = ""
+  AIRFARE_DB_PATH = "./airfare.db"
+  ADMIN_USERNAME = "admin"
+  ADMIN_PASSWORD = ""
+  HOST = "0.0.0.0"
+  PORT = "10000"
+  DEBUG = "false"
+  SERPAPI_TIMEOUT = "4.0"
+  SERPAPI_MAX_RETRIES = "2"
+  SERPAPI_FALLBACK_TO_CACHE = "true"
+  API_V1_PREFIX = "/api/v1"
+  CORS_ALLOWED_ORIGINS = "https://faresight-sih.vercel.app"
