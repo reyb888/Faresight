@@ -95,6 +95,21 @@ demo_airfare.db
 *.temp
 *.cache
 
+# Filter-branch / rewrite leftovers
+.git-rewrite/
+scrub_password.sh
+
+# Tool / IDE caches
+.ruff_cache/
+.freebuff/
+.agents/
+
+# One-off local scripts / logs (not part of the project)
+fix_schema.py
+deploy_logs.txt
+logs.txt
+.env.test-local
+
 # OS files
 Thumbs.db
 desktop.ini
