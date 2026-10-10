@@ -869,3 +869,8 @@ async def favicon():
     if os.path.exists("dashboard/static/favicon.ico"):
         return FileResponse("dashboard/static/favicon.ico")
     return Response(status_code=204)
+
+# ---------------------------------------------------------------------------
+# Vercel serverless handler export
+# ---------------------------------------------------------------------------
+handler = app
