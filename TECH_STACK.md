@@ -2,16 +2,17 @@
 
 Every choice below is picked for a specific reason tied to what this system has to do: scrape unreliable JS-heavy sites, handle a time-series-heavy dataset, compute a reproducible index, and serve it to both a dashboard and external consumers (NSO/RBI). Alternatives are noted where the trade-off is close.
 
-## 1. Scraping Layer
+## 1. Data Ingestion & Live Extraction Layer
+*(Transitioned to complete SerpApi architecture)*
 
 | Component | Choice | Why |
 |---|---|---|
-| Static/simple pages | **Scrapy** | Battle-tested Python crawling framework: built-in scheduling, retry/backoff, middleware pipeline, item pipelines — exactly the shape we need for "spider per source." |
-| JS-rendered pages (most OTAs, many airline search UIs) | **Playwright** (Python) | Faster and more stable than Selenium for modern SPA-style flight-search UIs; native async support fits Scrapy's async reactor better via `scrapy-playwright`; built-in network interception is useful for reading fare data straight out of XHR/JSON responses instead of scraping rendered DOM. |
-| Fallback JS automation | **Selenium** | Kept as a fallback for any source where Playwright hits an incompatibility (rare, but airline sites vary) — problem statement explicitly names it, and it has the widest browser-compatibility track record. |
-| Scheduling | **Airflow** (or lightweight **APScheduler**/cron for MVP) | Airflow gives DAG-based daily scheduling with retries, alerting, and a UI to see run history per source — useful once we have 10+ spiders running on independent schedules. APScheduler is the pragmatic MVP substitute if Airflow is too heavy for the hackathon timeline. |
-| Rate limiting / anti-bot resilience | Scrapy `AutoThrottle`, custom middleware, rotating proxy pool (e.g. residential/datacenter proxy provider), `fake-useragent` for header rotation | Keeps scraping polite and resilient to transient blocks — see `SECURITY.md §1.2–1.3` for the ethical constraints these are configured under. |
-| CAPTCHA handling | Avoid, not defeat — retry/backoff and route around rather than solve (see `SECURITY.md §1.4`) | Consistent with the project's ethical-scraping stance. |
+| **Primary Live Ingestion Engine** | **SerpApi (Google Flights Engine)** (`fetcher.py`) | Production-ready, resilient live fare extraction across Indian corridors (DEL-BOM, BLR-DEL, MAA-DEL, CCU-BOM, HYD-DEL) without Cloudflare or CAPTCHA blocks. Includes 5-key round-robin rotation, automated 429/401 retry failovers, and cached SQLite fallback. |
+| Static/simple pages (Legacy/Fallback) | **Scrapy** | Python crawling framework for airline portals; kept as offline batch / secondary collection. |
+| JS-rendered pages (Legacy/Fallback) | **Playwright** (Python) | SPA scraper prototype for direct airline sites when full browser emulation is desired. |
+| Fallback JS automation | **Selenium** | Legacy fallback for direct browser automation. |
+| Scheduling | **APScheduler / Cron** | Daily scheduled triggers for index computation and SerpApi fare updates. |
+| Rate limiting / anti-bot resilience | Multi-Key Rotation + SerpApi Proxy Mesh | 5 round-robin API keys (`SERP_API_KEY_1` to `SERP_API_KEY_5`) with instant failover on quota exhaustion. |
 
 ## 2. Data Pipeline
 

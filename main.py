@@ -601,6 +601,7 @@ async def admin_dashboard(request: Request, _: bool = Depends(admin_auth)):
 # ---------------------------------------------------------------------------
 
 @app.get("/healthz", include_in_schema=False)
+@app.get("/api/healthz", include_in_schema=False)
 async def health_check():
     return {"status": "ok", "database": "airfare.db", "timestamp": datetime.utcnow().isoformat()}
 
@@ -611,6 +612,8 @@ async def health_check():
 
 
 @app.get("/api/index", include_in_schema=False)
+@app.get("/api/v1/index", include_in_schema=False)
+@app.get("/v1/index", include_in_schema=False)
 async def api_index_proxy(frequency: str = "daily", db=Depends(get_db)):
     """Proxy for /api/index expected by dashboard.html - returns list for JS."""
     from datetime import date as _date

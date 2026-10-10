@@ -4,11 +4,16 @@
 
 APIx is a scheduled batch pipeline feeding a queryable time-series store, sitting behind an API and a dashboard. There is no real-time streaming requirement (fares are sampled once/day per route-window) — this keeps the architecture deliberately simple: a **daily batch pipeline**, not an event-streaming system.
 
+> [!IMPORTANT]
+> **Pipeline Evolution (Web Scraper → Complete SerpApi Architecture):**
+> While initial prototypes used Scrapy and Playwright spiders directly targeting airline/OTA portals, production deployments face severe Cloudflare/Akamai bot-detection and CAPTCHA rate limits. The system has transitioned to a complete **SerpApi (Google Flights Engine) Live Extraction Architecture** (`fetcher.py`). This guarantees 100% structured data availability, eliminates anti-bot failure modes, and utilizes multi-key round-robin rotation (`SERP_API_KEY_1` through `SERP_API_KEY_5`) with automated SQLite/Supabase fallback caching.
+
 ```mermaid
 flowchart LR
-    subgraph Sources["External Sources"]
-        A1[Airline Sites\nIndiGo, Air India, Akasa, SpiceJet]
-        A2[OTA Sites\nMakeMyTrip, Yatra, EaseMyTrip, Cleartrip, ixigo, Goibibo]
+    subgraph Sources["Live Fare Data Sources"]
+        S_API[SerpApi Engine\nGoogle Flights Aggregation]
+        K_ROT[Multi-Key Rotator\nKeys 1-5 Round-Robin]
+        A_LEG[Legacy Scrapy Spiders\nIndiGo, Air India, Akasa, OTAs]
     end
 
     subgraph Scraping["Scraping Layer"]

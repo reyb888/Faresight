@@ -16,6 +16,7 @@ from sqlalchemy import (
     Index,
     UniqueConstraint,
     text,
+    and_,
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session, relationship
@@ -44,18 +45,27 @@ POSTGRES_SYNC_URL = os.environ.get("DATABASE_URL_SYNC", "")
 # for today / stale Faresight Daily). Fall back to ephemeral /tmp SQLite only
 # when no Postgres URL is configured.
 def _try_postgres(url: str):
+    if not url:
+        return None
     try:
-        return create_engine(
+        # Normalize to postgresql+psycopg2 sync driver
+        if url.startswith("postgresql://"):
+            url = url.replace("postgresql://", "postgresql+psycopg2://", 1)
+        elif url.startswith("postgresql+asyncpg://"):
+            url = url.replace("postgresql+asyncpg://", "postgresql+psycopg2://", 1)
+        elif url.startswith("postgres://"):
+            url = url.replace("postgres://", "postgresql+psycopg2://", 1)
+
+        engine = create_engine(
             url, echo=False, future=True,
             pool_pre_ping=True, pool_recycle=300, connect_args={"connect_timeout": 5, "options": "-c statement_timeout=8000"},
         )
-    except ModuleNotFoundError as e:
-        if "psycopg2" in str(e):
-            logging.warning(f"psycopg2 not installed, falling back to SQLite: {e}")
-            return None
-        raise
+        # Test connection quickly so cold start doesn't hang later
+        with engine.connect() as conn:
+            pass
+        return engine
     except Exception as e:
-        logging.warning(f"Postgres engine failed, falling back to SQLite: {e}")
+        logging.warning(f"Postgres engine failed or driver unavailable, falling back to SQLite: {e}")
         return None
 
 _postgres_engine = None
